@@ -4,8 +4,11 @@ import { Race, PHYSICS_DT } from './race.js';
 import { CARS, RIVAL_COLORS } from './data/cars.js';
 import { buildTrack } from './render/trackMesh.js';
 import { CarMesh } from './render/carMesh.js';
+import { Vehicle } from './physics/vehicle.js';
 import { readInput } from './input.js';
-import { Hud, showScreen, renderGarage, renderResults } from './ui/screens.js';
+import { initControls, renderControls, leaveControls } from './ui/controls.js';
+import { Hud, showScreen, renderGarage, renderResults, renderTuning } from './ui/screens.js';
+import { applyTuning, defaultTuning } from './data/tuning.js';
 
 // ---------- Escena ----------
 const canvas = document.getElementById('scene');
@@ -40,13 +43,19 @@ scene.add(buildTrack(track));
 
 // ---------- Estado del juego ----------
 const hud = new Hud();
-const playerCar = CARS[0];
+let carIndex = 0;
 let race = null;
 let meshes = [];
 let mode = 'menu'; // menu | racing | paused | results
 let camMode = 0;   // 0 = persecución, 1 = cofre
 let shake = 0;
 let laps = 3;
+// Ajustes de rendimiento (solo vista por ahora: siempre en 0).
+const tuning = defaultTuning();
+let gearbox = 'auto';
+try {
+  gearbox = localStorage.getItem('gearbox') === 'manual' ? 'manual' : 'auto';
+} catch {}
 
 const RIVALS = [
   { name: 'Rojo', lane: -4, skill: 0.95 },
@@ -56,19 +65,27 @@ const RIVALS = [
 
 function startRace() {
   for (const m of meshes) scene.remove(m.group);
-  const spec = { ...playerCar.physics, color: playerCar.color };
-  const rivals = RIVALS.map((r, i) => ({ ...r, spec: playerCar.physics, color: RIVAL_COLORS[i] }));
+  const playerCar = CARS[carIndex];
+  const physics = applyTuning(playerCar.physics, tuning);
+  const spec = { ...physics, color: playerCar.color };
+  // Los rivales usan el mismo carro que el jugador (carrera pareja).
+  const colors = RIVAL_COLORS.filter((c) => c !== playerCar.color);
+  const rivals = RIVALS.map((r, i) => ({ ...r, spec: physics, color: colors[i] }));
   race = new Race(track, spec, { laps, rivals });
   race.onHit = (f) => (shake = Math.min(1, shake + f / 15));
-  meshes = race.racers.map((r) => new CarMesh(r.car, r.color));
+  meshes = race.racers.map((r) => new CarMesh(r.car, r.color, playerCar.model));
+  race.player.car.automatic = gearbox === 'auto';
   for (const m of meshes) scene.add(m.group);
   snapCamera();
+  if (preview) scene.remove(preview.group);
+  camera.clearViewOffset();
   mode = 'racing';
   showScreen(null);
   hud.show(true);
 }
 
 function toMenu() {
+  if (preview) scene.add(preview.group);
   mode = 'menu';
   hud.show(false);
   showScreen('menu');
@@ -76,11 +93,65 @@ function toMenu() {
 
 // ---------- Menús ----------
 document.querySelectorAll('[data-go]').forEach((b) =>
-  b.addEventListener('click', () => showScreen(b.dataset.go)),
+  b.addEventListener('click', () => {
+    if (b.dataset.go === 'controls') openControls('menu');
+    else showScreen(b.dataset.go);
+  }),
 );
-renderGarage(playerCar);
+
+// Controles: se abren desde el menú o desde la pausa y regresan ahí.
+let controlsReturn = 'menu';
+function openControls(from) {
+  controlsReturn = from;
+  renderControls();
+  showScreen('controls');
+}
+initControls();
+document.getElementById('controls-back').addEventListener('click', () => {
+  leaveControls();
+  showScreen(controlsReturn);
+});
+document.getElementById('pause-controls').addEventListener('click', () => openControls('pause'));
+// Carro de muestra en el garaje (en el pasto, dentro del óvalo).
+let preview = null;
+function showPreview() {
+  if (preview) scene.remove(preview.group);
+  const c = CARS[carIndex];
+  const v = new Vehicle(c.physics);
+  v.place(0, 0, 0);
+  preview = new CarMesh(v, c.color, c.model);
+  preview.sync(0);
+  scene.add(preview.group);
+}
+
+renderGarage(CARS[carIndex]);
+showPreview();
+function pickCar(dir) {
+  carIndex = (carIndex + dir + CARS.length) % CARS.length;
+  renderGarage(CARS[carIndex]);
+  showPreview();
+}
+document.getElementById('car-prev').addEventListener('click', () => pickCar(-1));
+document.getElementById('car-next').addEventListener('click', () => pickCar(1));
+window.addEventListener('keydown', (e) => {
+  if (document.getElementById('garage').classList.contains('hidden')) return;
+  if (e.code === 'ArrowLeft') pickCar(-1);
+  if (e.code === 'ArrowRight') pickCar(1);
+});
 document.getElementById('laps').addEventListener('change', (e) => (laps = Number(e.target.value)));
+const gearboxSelect = document.getElementById('gearbox');
+gearboxSelect.value = gearbox;
+gearboxSelect.addEventListener('change', (e) => {
+  gearbox = e.target.value;
+  try {
+    localStorage.setItem('gearbox', gearbox);
+  } catch {}
+});
 document.getElementById('start').addEventListener('click', startRace);
+document.getElementById('open-tuning').addEventListener('click', () => {
+  renderTuning(CARS[carIndex], tuning);
+  showScreen('tuning');
+});
 document.getElementById('again').addEventListener('click', startRace);
 document.getElementById('restart').addEventListener('click', startRace);
 document.getElementById('back').addEventListener('click', toMenu);
@@ -147,8 +218,13 @@ function frame(now) {
   last = now;
   const input = readInput();
 
-  if (mode === 'racing' || mode === 'paused') {
-    if (input.actions.has('Escape')) {
+  const inControls = !document.getElementById('controls').classList.contains('hidden');
+  if (inControls && input.actions.has('pause')) {
+    // En la pantalla de controles, pausa/Esc solo regresa.
+    leaveControls();
+    showScreen(controlsReturn);
+  } else if (mode === 'racing' || mode === 'paused') {
+    if (input.actions.has('pause')) {
       mode = mode === 'racing' ? 'paused' : 'racing';
       showScreen(mode === 'paused' ? 'pause' : null);
     }
@@ -156,8 +232,12 @@ function frame(now) {
 
   if (mode === 'racing') {
     const p = race.player;
-    if (input.actions.has('KeyC')) camMode = (camMode + 1) % 2;
-    if (input.actions.has('KeyR') && race.state === 'racing') race.respawn(p);
+    if (input.actions.has('camera')) camMode = (camMode + 1) % 2;
+    if (!p.car.automatic && race.state === 'racing') {
+      if (input.actions.has('shiftUp')) p.car.manualShift(1);
+      if (input.actions.has('shiftDown')) p.car.manualShift(-1);
+    }
+    if (input.actions.has('reset') && race.state === 'racing') race.respawn(p);
     if (!p.finished) Object.assign(p.car.input, input);
 
     acc += dt;
@@ -185,7 +265,17 @@ function frame(now) {
     }
     for (const m of meshes) m.sync(dt);
     updateCamera(dt);
+  } else if (mode === 'menu' && ['garage', 'tuning'].some((id) => !document.getElementById(id).classList.contains('hidden'))) {
+    // Garaje: la cámara gira alrededor del carro elegido (a la derecha del panel).
+    menuAngle += dt * 0.3;
+    const d = 7.5;
+    camera.position.set(Math.cos(menuAngle) * d, 2.2, Math.sin(menuAngle) * d);
+    camera.lookAt(0, 0.6, 0);
+    camera.setViewOffset(window.innerWidth, window.innerHeight, -window.innerWidth * 0.22, 0, window.innerWidth, window.innerHeight);
+    sun.position.set(20, 40, 15);
+    sun.target.position.set(0, 0, 0);
   } else if (mode === 'menu') {
+    camera.clearViewOffset();
     // Cámara girando sobre la pista en el menú.
     menuAngle += dt * 0.05;
     camera.position.set(Math.cos(menuAngle) * 380, 120, Math.sin(menuAngle) * 260);

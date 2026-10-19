@@ -21,6 +21,7 @@ export class Racer {
     this.finished = false;
     this.finishTime = 0;
     this.wrongWayTime = 0;
+    this.stuckTime = 0;
     this.position = 1;
   }
 }
@@ -72,7 +73,7 @@ export class Race {
 
     for (const d of this.drivers) {
       if (d.racer.finished) this.coast(d.racer);
-      else d.update(this.player);
+      else d.update(this.player, this.racers);
     }
     if (this.player.finished) this.coast(this.player);
 
@@ -117,6 +118,18 @@ export class Race {
     const along = r.car.vx * Math.cos(tp.heading) + r.car.vy * Math.sin(tp.heading);
     r.wrongWayTime = along < -3 ? r.wrongWayTime + dt : 0;
 
+    // IA atorada (lenta, atravesada o en sentido contrario): reaparece en la pista.
+    if (!r.isPlayer && this.state === 'racing' && !r.finished) {
+      let rel = r.car.heading - tp.heading;
+      rel = Math.atan2(Math.sin(rel), Math.cos(rel));
+      const stuck = r.car.speed < 8 || Math.abs(rel) > 1 || r.wrongWayTime > 0;
+      r.stuckTime = stuck ? r.stuckTime + dt : 0;
+      if (r.stuckTime > 2.5) {
+        this.respawn(r);
+        r.stuckTime = 0;
+      }
+    }
+
     if (r.finished || this.state === 'countdown') return;
     const laps = Math.floor(r.dist / this.track.length);
     if (laps > r.lapsDone) {
@@ -140,11 +153,20 @@ export class Race {
     sorted.forEach((r, i) => (r.position = i + 1));
   }
 
-  // Regresa al jugador al centro de la pista (tecla R).
+  // Regresa un carro al centro de la pista (tecla R, o IA atorada).
+  // Busca un hueco libre de otros carros para no aparecer encima de nadie.
   respawn(racer) {
     const pr = this.track.project(racer.car.x, racer.car.y);
-    const p = this.track.pointAt(pr.s);
-    racer.car.place(p.x, p.y, p.heading);
+    for (const lateral of [0, -5, 5, -8, 8]) {
+      const p = this.track.pointAt(pr.s);
+      const x = p.x + Math.sin(p.heading) * lateral;
+      const y = p.y - Math.cos(p.heading) * lateral;
+      const free = this.racers.every((o) => o === racer || Math.hypot(o.car.x - x, o.car.y - y) > 6);
+      if (free || lateral === 8) {
+        racer.car.place(x, y, p.heading);
+        return;
+      }
+    }
   }
 
   get currentLap() {

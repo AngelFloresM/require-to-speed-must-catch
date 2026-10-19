@@ -18,38 +18,54 @@
 
     <section id="controls" class="screen hidden">
       <h2>Controles</h2>
-      <table>
-        <tr><td>Acelerar</td><td>W / ↑ · RT</td></tr>
-        <tr><td>Frenar / reversa</td><td>S / ↓ · LT</td></tr>
-        <tr><td>Girar</td><td>A D / ← → · stick</td></tr>
-        <tr><td>Freno de mano</td><td>Espacio · A</td></tr>
-        <tr><td>Nitro</td><td>Shift · X</td></tr>
-        <tr><td>Cámara</td><td>C · RB</td></tr>
-        <tr><td>Volver a la pista</td><td>R · Y</td></tr>
-        <tr><td>Pausa</td><td>Esc · Start</td></tr>
-      </table>
-      <button data-go="menu">Volver</button>
+      <div class="controls-wrap"><table id="controls-table"></table></div>
+      <p id="controls-msg"></p>
+      <button id="controls-reset">Restablecer</button>
+      <button id="controls-back">Volver</button>
     </section>
 
     <section id="garage" class="screen hidden">
       <h2>Elige tu carro</h2>
       <div class="car-card">
-        <div id="car-name"></div>
+        <div class="car-pick">
+          <button id="car-prev" class="arrow" aria-label="Carro anterior">◀</button>
+          <div id="car-name"></div>
+          <button id="car-next" class="arrow" aria-label="Carro siguiente">▶</button>
+        </div>
+        <div id="car-type"></div>
         <div id="car-stats"></div>
+        <table id="car-info"></table>
       </div>
-      <label>Vueltas
-        <select id="laps">
-          <option>1</option><option selected>3</option><option>5</option>
-        </select>
-      </label>
+      <div class="options">
+        <label>Vueltas
+          <select id="laps">
+            <option>1</option><option selected>3</option><option>5</option>
+          </select>
+        </label>
+        <label>Caja
+          <select id="gearbox">
+            <option value="auto">Automática</option>
+            <option value="manual">Manual</option>
+          </select>
+        </label>
+      </div>
       <button id="start">Correr</button>
+      <button id="open-tuning">Ver ajustes</button>
       <button data-go="menu">Volver</button>
+    </section>
+
+    <section id="tuning" class="screen hidden">
+      <h2>Ajustes de rendimiento</h2>
+      <p class="note">Solo vista por ahora: los valores no se pueden cambiar.</p>
+      <div id="tuning-list"></div>
+      <button data-go="garage">Volver</button>
     </section>
 
     <section id="pause" class="screen hidden">
       <h2>Pausa</h2>
       <button id="resume">Continuar</button>
       <button id="restart">Reiniciar</button>
+      <button id="pause-controls">Controles</button>
       <button id="quit">Salir al menú</button>
     </section>
 
@@ -71,8 +87,9 @@
       </div>
       <div id="h-center"></div>
       <div class="bottom-right">
+        <div class="tach"><div id="h-rpm"></div><div class="redzone"></div></div>
         <div id="h-speed"></div>
-        <small>KM/H</small> <span id="h-gear"></span>
+        <small>KM/H</small> <span id="h-gear"></span> <small id="h-mode"></small>
         <div class="nitro"><div id="h-nitro"></div></div>
       </div>
     </div>
