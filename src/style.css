@@ -91,3 +91,7 @@ button:disabled:hover, button:disabled:focus-visible { background: transparent; 
 .tune-slider input { width: 100%; accent-color: var(--accent); }
 .tune p { margin: 4px 0 0; font-size: 13px; opacity: 0.85; }
 .tune p.tip { color: var(--accent); opacity: 0.9; }
+
+.track-pick select { min-width: 0; flex: 1; margin-left: 8px; }
+.track-pick label { display: flex; align-items: center; }
+#track-desc { margin: 6px 0 0; font-size: 13px; opacity: 0.8; min-height: 2.4em; }
