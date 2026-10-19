@@ -17,21 +17,21 @@ export class OvalTrack {
     const { straight: L, radius: R, arc } = this;
     s = ((s % this.length) + this.length) % this.length;
     const h = L / 2;
-    if (s < h) return { x: s, y: -R, heading: 0, curvature: 0 };
+    if (s < h) return { x: s, y: -R, heading: 0, curvature: 0, turn: 0 };
     s -= h;
     if (s < arc) {
       const a = -Math.PI / 2 + s / R;
-      return { x: h + R * Math.cos(a), y: R * Math.sin(a), heading: a + Math.PI / 2, curvature: 1 / R };
+      return { x: h + R * Math.cos(a), y: R * Math.sin(a), heading: a + Math.PI / 2, curvature: 1 / R, turn: 1 / R };
     }
     s -= arc;
-    if (s < L) return { x: h - s, y: R, heading: Math.PI, curvature: 0 };
+    if (s < L) return { x: h - s, y: R, heading: Math.PI, curvature: 0, turn: 0 };
     s -= L;
     if (s < arc) {
       const a = Math.PI / 2 + s / R;
-      return { x: -h + R * Math.cos(a), y: R * Math.sin(a), heading: a + Math.PI / 2, curvature: 1 / R };
+      return { x: -h + R * Math.cos(a), y: R * Math.sin(a), heading: a + Math.PI / 2, curvature: 1 / R, turn: 1 / R };
     }
     s -= arc;
-    return { x: -h + s, y: -R, heading: 0, curvature: 0 };
+    return { x: -h + s, y: -R, heading: 0, curvature: 0, turn: 0 };
   }
 
   // Proyecta un punto sobre la pista.
@@ -140,10 +140,12 @@ export class PathTrack {
     }
     const win = Math.max(1, Math.round(10 / this.step));
     this.curvatures = new Float64Array(count);
+    this.turns = new Float64Array(count); // con signo: + = curva a la izquierda
     for (let i = 0; i < count; i++) {
       let d = this.headings[(i + win) % count] - this.headings[(i - win + count) % count];
       d = Math.atan2(Math.sin(d), Math.cos(d));
-      this.curvatures[i] = Math.abs(d) / (2 * win * this.step);
+      this.turns[i] = d / (2 * win * this.step);
+      this.curvatures[i] = Math.abs(this.turns[i]);
     }
     // 4) Rejilla espacial de segmentos para project().
     this.cell = 25;
@@ -179,6 +181,7 @@ export class PathTrack {
       y: this.ys[i] + (this.ys[k] - this.ys[i]) * t,
       heading: this.headings[i] + dh * t,
       curvature: this.curvatures[i] + (this.curvatures[k] - this.curvatures[i]) * t,
+      turn: this.turns[i] + (this.turns[k] - this.turns[i]) * t,
     };
   }
 
