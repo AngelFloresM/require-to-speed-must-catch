@@ -1,7 +1,7 @@
 // Física arcade de un carro en 2D (modelo "bicicleta" con deriva de llantas).
 // Estilo NFS: mucho agarre, ayudas de estabilidad y derrape con freno de mano.
 
-import { driveForce, engineRpm, computeTopSpeed } from './engine.js';
+import { driveForce, engineRpm, computeTopSpeed, torqueAt, ratio } from './engine.js';
 
 const G = 9.81;
 const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
@@ -61,6 +61,16 @@ export class Vehicle {
     this.gear = next;
     this.shiftTimer = this.spec.shiftTime;
     return true;
+  }
+
+  // Cambio manual. No deja bajar si el motor pasaría del corte.
+  // Devuelve true si se hizo el cambio.
+  manualShift(dir) {
+    const p = this.spec;
+    const next = this.gear + dir;
+    if (next < 1 || next > p.gears.length) return false;
+    if (dir < 0 && engineRpm(p, next, this.forwardSpeed) > p.redline * 1.03) return false;
+    return this.shift(dir);
   }
 
   autoShift(vLong) {
@@ -141,7 +151,12 @@ export class Vehicle {
       fxR -= dir * Math.min(inp.brake * p.brakeForce * (1 - p.brakeBias), muR * 0.9);
     }
     if (inp.handbrake) fxR -= dir * Math.min(muR, Math.abs(vLong) * p.mass * 2);
-    const drag = -p.dragCoef * vLong * Math.abs(vLong) - p.rollingResistance * vLong;
+    let drag = -p.dragCoef * vLong * Math.abs(vLong) - p.rollingResistance * vLong;
+    // Freno de motor al soltar el acelerador (más fuerte en marchas bajas).
+    if (inp.throttle === 0 && vLong > 1 && this.shiftTimer <= 0) {
+      const eb = (torqueAt(p.torqueCurve, this.rpm) * p.engineBraking * ratio(p, this.gear)) / p.wheelRadius;
+      drag -= Math.min(eb, p.mass * 3);
+    }
 
     // Fuerzas laterales: lo que queda del agarre tras acelerar/frenar
     // (círculo de fricción suavizado para que se sienta arcade).

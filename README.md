@@ -47,7 +47,9 @@ Si no, el deploy de ramas distintas a `main` es rechazado.
 | Girar | A D / ← → | Stick izq. |
 | Freno de mano | Espacio | A |
 | Nitro | Shift | X |
-| Cámara | C | RB |
+| Subir marcha (manual) | E | RB |
+| Bajar marcha (manual) | Q | LB |
+| Cámara | C | Back |
 | Volver a la pista | R | Y |
 | Pausa | Esc | Start |
 
