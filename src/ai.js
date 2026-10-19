@@ -92,6 +92,11 @@ export class Driver {
     // Velocidad: perfil de frenado; frena antes si va alguien lento adelante.
     let target = this.targetSpeed(pr.s, speed);
     if (this.follow !== null) target = Math.min(target, this.follow);
+    // Trabado contra otro carro: cede el paso un momento para despegarse.
+    if (this.yieldTime > 0) {
+      this.yieldTime -= 1 / 120;
+      target = Math.min(target, speed * 0.4);
+    }
     // Si va muy chueco (después de un golpe), con calma.
     if (Math.abs(alpha) > 0.6) target = Math.min(target, 12);
 
@@ -132,6 +137,7 @@ export class Driver {
     let lane = base;
     this.follow = null;
     let nearestAhead = Infinity;
+    let touching = false;
     for (const r of racers) {
       if (r === this.racer) continue;
       const o = r.car;
@@ -144,6 +150,8 @@ export class Driver {
       // Alguien a mi lado: me separo un poco para no apretarlo contra el muro.
       if (Math.abs(fwd) < 5 && Math.abs(left) < 3.2) {
         lane += left > 0 ? 1.5 : -1.5;
+        // Tocándonos y el otro va un poco adelante: si dura, cedo el paso.
+        if (fwd > 0 && Math.abs(left) < 2.4) touching = true;
         continue;
       }
       // Alguien adelante en mi línea.
@@ -160,6 +168,11 @@ export class Driver {
         // En curva (o sin espacio): lo sigue a distancia.
         this.follow = Math.max(0, oSpeed - (fwd < 6 ? 2 : 0.5));
       }
+    }
+    this.contactTime = touching ? (this.contactTime ?? 0) + 1 / 120 : 0;
+    if (this.contactTime > 0.7 && !(this.yieldTime > 0)) {
+      this.yieldTime = 1.2;
+      this.contactTime = 0;
     }
     return clamp(lane, -limit, limit);
   }

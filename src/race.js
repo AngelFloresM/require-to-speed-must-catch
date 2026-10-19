@@ -127,15 +127,22 @@ export class Race {
     const along = r.car.vx * Math.cos(tp.heading) + r.car.vy * Math.sin(tp.heading);
     r.wrongWayTime = along < -3 ? r.wrongWayTime + dt : 0;
 
-    // IA atorada (lenta, atravesada o en sentido contrario): reaparece en la pista.
+    // IA atorada: si en 3 s avanzó menos de 10 m por la pista (chocada,
+    // atravesada o en sentido contrario), reaparece en la pista.
     if (!r.isPlayer && this.state === 'racing' && !r.finished) {
+      // Muy desalineado con la pista por 3 s (trabado de lado): reaparece.
       let rel = r.car.heading - tp.heading;
       rel = Math.atan2(Math.sin(rel), Math.cos(rel));
-      const stuck = r.car.speed < 8 || Math.abs(rel) > 1 || r.wrongWayTime > 0;
-      r.stuckTime = stuck ? r.stuckTime + dt : 0;
-      if (r.stuckTime > 2.5) {
+      r.crookedTime = Math.abs(rel) > 0.5 ? (r.crookedTime ?? 0) + dt : 0;
+      if (r.crookedTime > 3) {
         this.respawn(r);
+        r.crookedTime = 0;
+      }
+      r.stuckTime += dt;
+      if (r.stuckTime >= 3) {
+        if (r.dist - (r.stuckDist ?? -Infinity) < 10) this.respawn(r);
         r.stuckTime = 0;
+        r.stuckDist = r.dist;
       }
     }
 
