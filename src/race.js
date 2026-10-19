@@ -38,6 +38,7 @@ export class Race {
     this.drivers = [];
     rivals.forEach((r) => {
       const racer = new Racer(r.name, r.spec, r.color);
+      racer.model = r.model;
       this.racers.push(racer);
       this.drivers.push(new Driver(racer, track, { lane: r.lane ?? 0, skill: r.skill ?? 0.9 }));
     });

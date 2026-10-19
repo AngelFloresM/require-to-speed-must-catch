@@ -1,7 +1,8 @@
 import * as THREE from 'three';
 import { OvalTrack } from './track.js';
 import { Race, PHYSICS_DT } from './race.js';
-import { CARS, RIVAL_COLORS } from './data/cars.js';
+import { CARS } from './data/cars.js';
+import { pickRivals } from './rivals.js';
 import { buildTrack } from './render/trackMesh.js';
 import { CarMesh } from './render/carMesh.js';
 import { Vehicle } from './physics/vehicle.js';
@@ -57,23 +58,17 @@ try {
   gearbox = localStorage.getItem('gearbox') === 'manual' ? 'manual' : 'auto';
 } catch {}
 
-const RIVALS = [
-  { name: 'Rojo', lane: -4, skill: 0.95 },
-  { name: 'Amarillo', lane: 3, skill: 0.88 },
-  { name: 'Verde', lane: 0, skill: 0.8 },
-];
 
 function startRace() {
   for (const m of meshes) scene.remove(m.group);
   const playerCar = CARS[carIndex];
   const physics = applyTuning(playerCar.physics, tuning);
   const spec = { ...physics, color: playerCar.color };
-  // Los rivales usan el mismo carro que el jugador (carrera pareja).
-  const colors = RIVAL_COLORS.filter((c) => c !== playerCar.color);
-  const rivals = RIVALS.map((r, i) => ({ ...r, spec: physics, color: colors[i] }));
+  // Cada rival maneja un carro distinto al del jugador.
+  const rivals = pickRivals(playerCar.id);
   race = new Race(track, spec, { laps, rivals });
   race.onHit = (f) => (shake = Math.min(1, shake + f / 15));
-  meshes = race.racers.map((r) => new CarMesh(r.car, r.color, playerCar.model));
+  meshes = race.racers.map((r) => new CarMesh(r.car, r.color, r.model ?? playerCar.model));
   race.player.car.automatic = gearbox === 'auto';
   for (const m of meshes) scene.add(m.group);
   snapCamera();
@@ -126,9 +121,15 @@ function showPreview() {
 
 renderGarage(CARS[carIndex]);
 showPreview();
+function showRivals() {
+  const names = pickRivals(CARS[carIndex].id).map((r) => r.name);
+  document.getElementById('rivals-info').textContent = `Rivales: ${names.join(', ')}`;
+}
+showRivals();
 function pickCar(dir) {
   carIndex = (carIndex + dir + CARS.length) % CARS.length;
   renderGarage(CARS[carIndex]);
+  showRivals();
   showPreview();
 }
 document.getElementById('car-prev').addEventListener('click', () => pickCar(-1));
