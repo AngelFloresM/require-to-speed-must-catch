@@ -85,7 +85,7 @@ test('el tráfico frena detrás del jugador detenido', () => {
   assert.ok(min > 4.6, `se acercó a ${min.toFixed(1)} m`);
 });
 
-test('modo libre con tráfico: chocar a un carro lo detiene y avisa al pasarse el alto', async () => {
+test('modo libre con tráfico: chocar a un carro lo detiene', async () => {
   const { FreeRide } = await import('../src/freeRide.js');
   const { CARS } = await import('../src/data/cars.js');
   const ride = new FreeRide(city, CARS[0].physics, { traffic: 1 });
@@ -101,23 +101,7 @@ test('modo libre con tráfico: chocar a un carro lo detiene y avisa al pasarse e
     if (c.stun > 0) stunned = true;
   }
   assert.ok(stunned, 'el carro chocado se detiene');
-
-  // Cruce con semáforo en rojo para el jugador.
-  const node = city.signals[0];
-  const edge = node.edges.find((e) => e.length > 40 && (e.road.oneway === 0 || e.road.oneway === (e.b === node ? 1 : -1)));
-  const ride2 = new FreeRide(city, CARS[0].physics);
-  const p = edge.b === node ? edge.path[edge.path.length - 2] : edge.path[1];
-  const h = Math.atan2(node.y - p[1], node.x - p[0]);
-  const start = [node.x - Math.cos(h) * 30, node.y - Math.sin(h) * 30];
-  // Busca un momento en rojo para ese acceso.
-  let t = 0;
-  while (lightFor(node, edge, t) !== 'red') t += 0.5;
-  ride2.time = t;
-  ride2.player.car.place(start[0], start[1], h);
-  ride2.player.car.vx = Math.cos(h) * 15;
-  ride2.player.car.vy = Math.sin(h) * 15;
-  for (let i = 0; i < 120 * 2.5 && !ride2.message; i++) ride2.step(1 / 120);
-  assert.equal(ride2.message?.text, '¡Te pasaste el alto!');
+  assert.equal(ride.message, undefined, 'en modo libre no hay avisos de reglas');
 });
 
 test('los postes de semáforo quedan sobre la banqueta', async () => {
