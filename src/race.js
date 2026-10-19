@@ -42,7 +42,8 @@ export class Race {
       this.racers.push(racer);
       this.drivers.push(new Driver(racer, track, { lane: r.lane ?? 0, skill: r.skill ?? 0.9 }));
     });
-    this.onHit = null; // callback(fuerza)
+    this.onHit = null; // callback(fuerza) — golpes del jugador
+    this.onWallHit = null; // callback(racer, fuerza) — cualquier carro contra el muro
     this.placeOnGrid();
   }
 
@@ -73,10 +74,16 @@ export class Race {
     const frozen = this.state === 'countdown';
 
     for (const d of this.drivers) {
+      d.update(this.player, this.racers);
+      // Al terminar sigue dirigiendo, pero frena suave.
       if (d.racer.finished) this.coast(d.racer);
-      else d.update(this.player, this.racers);
     }
-    if (this.player.finished) this.coast(this.player);
+    if (this.player.finished) {
+      // Al cruzar la meta, la IA toma el volante del jugador para frenar sin chocar.
+      this.autopilot ??= new Driver(this.player, this.track, { lane: 0, skill: 0.5 });
+      this.autopilot.update(null, this.racers);
+      this.coast(this.player);
+    }
 
     for (const r of this.racers) {
       if (frozen) {
@@ -87,6 +94,7 @@ export class Race {
       r.car.update(dt);
       const hit = collideWithWalls(r.car, this.track);
       if (hit > 3 && r.isPlayer && this.onHit) this.onHit(hit);
+      if (hit > 3 && this.onWallHit) this.onWallHit(r, hit);
     }
     for (let i = 0; i < this.racers.length; i++) {
       for (let j = i + 1; j < this.racers.length; j++) {
@@ -104,7 +112,7 @@ export class Race {
   coast(racer) {
     const inp = racer.car.input;
     inp.throttle = 0;
-    inp.brake = 0.3;
+    inp.brake = racer.car.forwardSpeed > 0.5 ? 0.3 : 0;
     inp.nitro = false;
     inp.handbrake = false;
   }
