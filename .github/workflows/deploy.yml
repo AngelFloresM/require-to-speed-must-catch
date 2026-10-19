@@ -1,7 +1,8 @@
-name: Deploy to GitHub Pages
+name: CD - Deploy to GitHub Pages
 
-# Automático en cada push a main.
-# Manual: Actions → "Deploy to GitHub Pages" → Run workflow → elige la rama.
+# CD: cada merge de un PR a main (y cualquier push a main) corre las pruebas,
+# construye y publica en GitHub Pages. Luego comenta en el PR la liga publicada.
+# Manual: Actions → "CD - Deploy to GitHub Pages" → Run workflow → elige la rama.
 on:
   push:
     branches: [main]
@@ -12,9 +13,10 @@ permissions:
   pages: write
   id-token: write
 
+# Un deploy a la vez; no cancela uno que ya está publicando.
 concurrency:
   group: pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   build:
@@ -41,6 +43,35 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
+    outputs:
+      page_url: ${{ steps.deployment.outputs.page_url }}
     steps:
       - id: deployment
         uses: actions/deploy-pages@v4
+
+  # Avisa en el PR que se mezcló que ya está publicado.
+  notify:
+    needs: deploy
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/github-script@v7
+        env:
+          PAGE_URL: ${{ needs.deploy.outputs.page_url }}
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const { data: prs } = await github.rest.repos.listPullRequestsAssociatedWithCommit({
+              owner, repo, commit_sha: context.sha,
+            });
+            const merged = prs.filter((pr) => pr.merged_at && pr.base.ref === 'main');
+            for (const pr of merged) {
+              await github.rest.issues.createComment({
+                owner, repo, issue_number: pr.number,
+                body: `🚀 Publicado en GitHub Pages: ${process.env.PAGE_URL}\n\nCommit \`${context.sha.slice(0, 7)}\``,
+              });
+            }
+            core.info(merged.length ? `Comentado en #${merged.map((p) => p.number).join(', #')}` : 'Push directo, sin PR');
