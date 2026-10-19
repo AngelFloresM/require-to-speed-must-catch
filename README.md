@@ -22,6 +22,9 @@ Av. Ignacio Allende, Libramiento a Mazatlán, Av. Paseo de la Loma, Av. Jacarand
   **Suposición**: falta confirmar el sentido real de cada calle.
 - Solo se maneja sobre las calles. Las que salen del área terminan en barreras rojo/blanco.
 - Minimapa abajo a la izquierda y nombre de la calle arriba.
+- **Mapa expandido** (M, botón "Mapa" o cruceta ↑ del control): pausa el juego y muestra toda la
+  ciudad con tu posición. Zoom con rueda / + − / gatillos; mover arrastrando, con flechas o el stick;
+  C / A centra en ti; M / Esc / B cierra. Con zoom aparecen los nombres de las calles.
 - **Tráfico ligero** (24 carros) y **semáforos** en los cruces con avenida. Los carros manejan por
   la derecha, respetan el sentido de cada calle, guardan distancia (también contigo), se detienen
   en rojo y en cruces sin semáforo esperan si está ocupado.

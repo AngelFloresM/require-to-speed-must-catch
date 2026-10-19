@@ -10,6 +10,7 @@ import { Vehicle } from './physics/vehicle.js';
 import { readInput } from './input.js';
 import { initControls, renderControls, leaveControls } from './ui/controls.js';
 import { FreeMode } from './freeMode.js';
+import { BigMap } from './ui/bigMap.js';
 import { Hud, showScreen, renderGarage, renderResults, renderTuning } from './ui/screens.js';
 import { applyTuning, defaultTuning } from './data/tuning.js';
 
@@ -214,6 +215,16 @@ document.getElementById('free-btn').addEventListener('click', () => {
   setGarageMode('free');
   showScreen('garage');
 });
+// Mapa expandido del modo libre: pausa el juego mientras está abierto.
+let bigMap = null;
+function openMap() {
+  bigMap ??= new BigMap(freeMode.city, document.getElementById('big-map'));
+  bigMap.onClose = () => (mode = 'free');
+  bigMap.show(freeMode.ride.player.car);
+  mode = 'map';
+}
+document.getElementById('open-map').addEventListener('click', openMap);
+
 function startFree() {
   const car = CARS[carIndex];
   const spec = applyTuning(car.physics, tuning);
@@ -322,7 +333,10 @@ function frame(now) {
       }, 1500);
     }
   } else if (mode === 'free') {
-    freeMode.update(dt, input, hud);
+    if (input.actions.has('map')) openMap();
+    else freeMode.update(dt, input, hud);
+  } else if (mode === 'map') {
+    bigMap.update(dt);
   } else if (mode === 'results') {
     acc += dt;
     while (acc >= PHYSICS_DT) {

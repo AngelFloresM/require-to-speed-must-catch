@@ -102,8 +102,20 @@
 
     <div id="free-hud" class="hidden">
       <canvas id="minimap" width="180" height="180"></canvas>
+      <button id="open-map" title="Abrir mapa">Mapa (M)</button>
       <div id="street"></div>
       <div id="free-msg"></div>
+    </div>
+
+    <div id="big-map" class="hidden">
+      <canvas></canvas>
+      <div class="map-bar">
+        <button data-map="in" aria-label="Acercar">+</button>
+        <button data-map="out" aria-label="Alejar">−</button>
+        <button data-map="center">Centrar</button>
+        <button data-map="close">Cerrar</button>
+      </div>
+      <p class="map-help">Rueda / + − / gatillos: zoom · Arrastrar / flechas / stick: mover · C / A: centrar · M / Esc / B: cerrar</p>
     </div>
 
     <script type="module" src="/src/main.js"></script>
