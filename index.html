@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Require to Speed</title>
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body>
+    <canvas id="scene"></canvas>
+
+    <section id="menu" class="screen">
+      <h1>REQUIRE TO SPEED<span>MUST CATCH</span></h1>
+      <button data-go="garage">Carrera rápida</button>
+      <button data-go="controls">Controles</button>
+    </section>
+
+    <section id="controls" class="screen hidden">
+      <h2>Controles</h2>
+      <table>
+        <tr><td>Acelerar</td><td>W / ↑ · RT</td></tr>
+        <tr><td>Frenar / reversa</td><td>S / ↓ · LT</td></tr>
+        <tr><td>Girar</td><td>A D / ← → · stick</td></tr>
+        <tr><td>Freno de mano</td><td>Espacio · A</td></tr>
+        <tr><td>Nitro</td><td>Shift · X</td></tr>
+        <tr><td>Cámara</td><td>C · RB</td></tr>
+        <tr><td>Volver a la pista</td><td>R · Y</td></tr>
+        <tr><td>Pausa</td><td>Esc · Start</td></tr>
+      </table>
+      <button data-go="menu">Volver</button>
+    </section>
+
+    <section id="garage" class="screen hidden">
+      <h2>Elige tu carro</h2>
+      <div class="car-card">
+        <div id="car-name"></div>
+        <div id="car-stats"></div>
+      </div>
+      <label>Vueltas
+        <select id="laps">
+          <option>1</option><option selected>3</option><option>5</option>
+        </select>
+      </label>
+      <button id="start">Correr</button>
+      <button data-go="menu">Volver</button>
+    </section>
+
+    <section id="pause" class="screen hidden">
+      <h2>Pausa</h2>
+      <button id="resume">Continuar</button>
+      <button id="restart">Reiniciar</button>
+      <button id="quit">Salir al menú</button>
+    </section>
+
+    <section id="results" class="screen hidden">
+      <h2 id="result-title"></h2>
+      <table id="result-table"></table>
+      <button id="again">Correr otra vez</button>
+      <button id="back">Menú</button>
+    </section>
+
+    <div id="hud" class="hidden">
+      <div class="top-left">
+        <div><small>POS</small> <b id="h-pos"></b></div>
+        <div><small>VUELTA</small> <b id="h-lap"></b></div>
+      </div>
+      <div class="top-right">
+        <div><small>TIEMPO</small> <b id="h-time"></b></div>
+        <div><small>MEJOR</small> <b id="h-best"></b></div>
+      </div>
+      <div id="h-center"></div>
+      <div class="bottom-right">
+        <div id="h-speed"></div>
+        <small>KM/H</small> <span id="h-gear"></span>
+        <div class="nitro"><div id="h-nitro"></div></div>
+      </div>
+    </div>
+
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
