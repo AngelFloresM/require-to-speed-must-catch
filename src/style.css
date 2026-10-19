@@ -78,6 +78,8 @@ button.arrow { min-width: 44px; padding: 6px 10px; }
 #h-rpm { height: 100%; width: 0; background: #e8e8e8; }
 .tach .redzone { position: absolute; top: 0; right: 0; height: 100%; width: 10%; background: rgba(255, 60, 60, 0.45); }
 .tach.shift #h-rpm { background: #ff3c3c; }
+#race-minimap { position: absolute; left: 16px; bottom: 16px; width: 180px; height: 180px; }
+#hud.free #race-minimap { display: none; }
 
 /* Pantalla de controles */
 .controls-wrap { max-height: 60vh; overflow: auto; max-width: 100%; }

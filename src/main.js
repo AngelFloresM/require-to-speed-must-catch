@@ -5,6 +5,7 @@ import { Race, PHYSICS_DT } from './race.js';
 import { CARS } from './data/cars.js';
 import { pickRivals } from './rivals.js';
 import { buildTrack } from './render/trackMesh.js';
+import { TrackMinimap } from './ui/trackMinimap.js';
 import { CarMesh } from './render/carMesh.js';
 import { Vehicle } from './physics/vehicle.js';
 import { readInput } from './input.js';
@@ -89,6 +90,8 @@ try {
 } catch {}
 
 
+let raceMap = null; // minimapa de la carrera
+
 function startRace() {
   for (const m of meshes) scene.remove(m.group);
   const playerCar = CARS[carIndex];
@@ -101,6 +104,7 @@ function startRace() {
   race.onHit = (f) => (shake = Math.min(1, shake + f / 15));
   meshes = race.racers.map((r) => new CarMesh(r.car, r.color, r.model ?? playerCar.model));
   race.player.car.automatic = gearbox === 'auto';
+  raceMap = new TrackMinimap(track, document.getElementById('race-minimap'));
   for (const m of meshes) scene.add(m.group);
   snapCamera();
   if (preview) scene.remove(preview.group);
@@ -313,6 +317,7 @@ function frame(now) {
     for (const m of meshes) m.sync(dt);
     updateCamera(dt);
     hud.update(race);
+    raceMap.draw(race);
 
     if (race.state === 'finished') {
       mode = 'results';
