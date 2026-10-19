@@ -61,6 +61,9 @@ Si no, el deploy de ramas distintas a `main` es rechazado.
 
 ## Controles
 
+**Menús con control:** cruceta o stick para moverte, A acepta, B regresa, LB/RB cambian de carro en
+el garaje, izquierda/derecha sobre una lista cambia su valor. Con teclado: ↑ ↓, Enter, Tab.
+
 Se pueden cambiar en **Controles** (menú principal o pausa): 2 teclas y 1 entrada del control por acción, con botón × para quitar. Se guardan en el navegador. Valores por defecto:
 
 | Acción | Teclado | Control |

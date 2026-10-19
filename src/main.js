@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { trackBounds } from './track.js';
 import { TRACKS } from './data/tracks.js';
+import { MenuNav } from './ui/menuNav.js';
 import { Race, PHYSICS_DT } from './race.js';
 import { CARS } from './data/cars.js';
 import { pickRivals } from './rivals.js';
@@ -145,6 +146,19 @@ document.getElementById('controls-back').addEventListener('click', () => {
   showScreen(controlsReturn);
 });
 document.getElementById('pause-controls').addEventListener('click', () => openControls('pause'));
+
+// Menús con el control: B regresa a la pantalla anterior.
+const BACK = {
+  controls: () => document.getElementById('controls-back').click(),
+  garage: () => showScreen('menu'),
+  tuning: () => showScreen('garage'),
+  pause: () => document.getElementById('resume').click(),
+  results: () => document.getElementById('back').click(),
+};
+const menuNav = new MenuNav({
+  onBack: (id) => BACK[id]?.(),
+  onCar: (dir) => pickCar(dir),
+});
 // Carro de muestra en el garaje: detrás de la meta de la pista elegida.
 let preview = null;
 function showPreview() {
@@ -296,6 +310,7 @@ function frame(now) {
   const dt = Math.min((now - last) / 1000, 0.25);
   last = now;
   const input = readInput();
+  menuNav.update(dt);
 
   const inControls = !document.getElementById('controls').classList.contains('hidden');
   if (inControls && input.actions.has('pause')) {
