@@ -17,6 +17,7 @@ export const ACTIONS = [
   { id: 'camera', label: 'Cámara' },
   { id: 'reset', label: 'Volver a la pista' },
   { id: 'pause', label: 'Pausa' },
+  { id: 'map', label: 'Mapa (modo libre)' },
 ];
 
 const btn = (index) => ({ type: 'button', index });
@@ -33,6 +34,7 @@ export const DEFAULT_BINDINGS = {
   camera: { keys: ['KeyC', null], pad: btn(8) },
   reset: { keys: ['KeyR', null], pad: btn(3) },
   pause: { keys: ['Escape', 'KeyP'], pad: btn(9) },
+  map: { keys: ['KeyM', null], pad: btn(12) },
 };
 
 const clone = (b) => JSON.parse(JSON.stringify(b));
