@@ -1,5 +1,7 @@
 name: Deploy to GitHub Pages
 
+# Automático en cada push a main.
+# Manual: Actions → "Deploy to GitHub Pages" → Run workflow → elige la rama.
 on:
   push:
     branches: [main]
@@ -26,6 +28,9 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run build
+        env:
+          # Se muestra en el menú para saber qué versión está publicada.
+          VITE_BUILD_INFO: ${{ github.ref_name }} · ${{ github.sha }}
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist

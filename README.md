@@ -27,6 +27,17 @@ Cada push a `main` corre las pruebas, construye y publica en
 
 Una sola vez: en GitHub ve a **Settings → Pages → Source** y elige **GitHub Actions**.
 
+### Deploy manual de cualquier rama
+
+1. **Actions → Deploy to GitHub Pages → Run workflow**, elige la rama y dale **Run**.
+2. La rama y el commit publicados se ven abajo a la izquierda en el menú.
+
+Solo hay un sitio: el deploy manual reemplaza lo publicado hasta el siguiente deploy.
+
+Una sola vez: **Settings → Environments → github-pages → Deployment branches and tags**
+debe permitir las ramas que quieras publicar (por ejemplo `No restriction`, o agrega la regla `claude/*`).
+Si no, el deploy de ramas distintas a `main` es rechazado.
+
 ## Controles
 
 | Acción | Teclado | Control |
