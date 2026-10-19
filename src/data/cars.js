@@ -152,4 +152,3 @@ export const CARS = [
   },
 ];
 
-export const RIVAL_COLORS = [0xd13b2f, 0xe0b02a, 0x3fae5a, 0x8e44ad];

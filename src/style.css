@@ -91,3 +91,4 @@ button:disabled:hover, button:disabled:focus-visible { background: transparent; 
 .tune-slider input { width: 100%; accent-color: var(--accent); }
 .tune p { margin: 4px 0 0; font-size: 13px; opacity: 0.85; }
 .tune p.tip { color: var(--accent); opacity: 0.9; }
+#rivals-info { margin: 10px 0 0; font-size: 13px; opacity: 0.8; }
