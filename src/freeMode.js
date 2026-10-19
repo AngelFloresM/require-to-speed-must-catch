@@ -6,6 +6,10 @@ import { CarMesh } from './render/carMesh.js';
 import { FreeRide } from './freeRide.js';
 import { Minimap } from './ui/minimap.js';
 import { PHYSICS_DT } from './race.js';
+import { buildSignals } from './city/signals.js';
+import { TrafficMesh, SignalMesh } from './render/trafficMesh.js';
+
+const TRAFFIC_CARS = 24;
 
 const SKY = 0xa9cfe6;
 const $ = (id) => document.getElementById(id);
@@ -38,6 +42,9 @@ export class FreeMode {
     Object.assign(this.sun.shadow.camera, { left: -45, right: 45, top: 45, bottom: -45, near: 1, far: 220 });
     scene.add(this.sun, this.sun.target);
     scene.add(buildCityMesh(this.city));
+    buildSignals(this.city);
+    this.signalMesh = new SignalMesh(this.city);
+    scene.add(this.signalMesh.group);
     this.scene = scene;
     this.minimap = new Minimap(this.city, $('minimap'));
   }
@@ -45,7 +52,10 @@ export class FreeMode {
   start({ car, spec, automatic }) {
     this.ensureScene();
     if (this.mesh) this.scene.remove(this.mesh.group);
-    this.ride = new FreeRide(this.city, spec);
+    this.ride = new FreeRide(this.city, spec, { traffic: TRAFFIC_CARS });
+    if (this.trafficMesh) this.scene.remove(this.trafficMesh.group);
+    this.trafficMesh = new TrafficMesh(this.ride.traffic);
+    this.scene.add(this.trafficMesh.group);
     this.ride.onHit = (f) => (this.shake = Math.min(1, this.shake + f / 15));
     this.ride.player.car.automatic = automatic;
     this.mesh = new CarMesh(this.ride.player.car, car.color, car.model);
@@ -67,7 +77,7 @@ export class FreeMode {
     p.position = 1;
     p.lapTimes = [];
     p.lapStart = 0;
-    p.wrongWayTime = 0;
+    p.wrongWayTime = this.ride.wrongWayTime;
     return { player: p, racers: [p], laps: 1, currentLap: 1, time: this.ride.time, state: 'racing' };
   }
 
@@ -87,7 +97,14 @@ export class FreeMode {
       this.acc -= PHYSICS_DT;
     }
     this.mesh.sync(dt);
+    this.trafficMesh.update();
+    this.signalMesh.update(this.ride.traffic.time);
     this.updateCamera(dt);
+    const msg = this.ride.message && this.ride.time < this.ride.message.until ? this.ride.message.text : '';
+    if (this.lastMsg !== msg) {
+      this.lastMsg = msg;
+      $('free-msg').textContent = msg;
+    }
     hud.update(this.hudView());
 
     const road = this.ride.street();
