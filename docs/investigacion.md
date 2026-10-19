@@ -58,3 +58,27 @@ Nosotros guardamos los 3 valores de menú (0–10) y aparte los valores físicos
 - https://www.gamepressure.com/needforspeedmostwanted/the-basics-car-handling/zb1fd
 - https://www.thetoptens.com/games/best-cars-need-for-speed-most-wanted/
 - https://www.thedrive.com/news/one-nfs-most-wanted-feature-was-so-controversial-it-drove-developers-to-quit
+
+## Carros agregados (datos reales de referencia)
+
+Nombres inventados, datos basados en fichas públicas. "≈" = aproximado o sin fuente oficial confirmada.
+
+| | Nizan Marsh | Porshe Taikan Turbo S | Fort Mustank GT |
+|---|---|---|---|
+| Referencia | Nissan March 1.6 (K13) | Porsche Taycan Turbo S (2025) | Ford Mustang GT (S650, 2024) |
+| Motor | 1.6 L 4 cil. | 2 motores eléctricos | 5.0 L V8 Coyote |
+| Potencia | 106 hp @ 5600 | 570 kW; 700 kW con overboost | 480 hp @ 7150 (486 con escape activo) |
+| Torque | 142 Nm @ 4400 | 1,110 Nm (con Launch Control) | 563 Nm (415 lb-ft) @ ≈4900 |
+| Tracción | Delantera | Integral | Trasera |
+| Caja | Manual 5 / auto 4 | 2 vel. en eje trasero | Manual 6 / auto 10 |
+| Peso | ≈1,030 kg | ≈2,300 kg | ≈1,700–1,750 kg |
+| 0-100 km/h real | ≈11 s (sin dato oficial) | 2.4 s (oficial, Launch Control) | ≈4.0–4.5 s (fuentes difieren) |
+| Vel. máx real | ≈175 km/h | 260 km/h (oficial) | ≈250 km/h limitada |
+
+Relaciones de caja, curvas de torque, radio de llanta y coeficientes de arrastre son estimaciones razonables (no hay fichas oficiales para todo).
+En el juego el agarre es más alto que en la vida real (arcade), por eso los 0-100 del juego pueden salir un poco más rápidos.
+
+Fuentes:
+- Nissan March: https://www.mercadolibre.com.mx/blog/mo-march-2024-precio · https://www.autocosmos.com.mx/catalogo/segmentos/nissan/march
+- Porsche Taycan Turbo S: hoja oficial de Porsche https://pnr-prd2-pub2.newsroom.porsche.com/dam/jcr:07390e8a-7387-417f-8df1-467fd36df165/Taycan%20Turbo%20S%20spec%20sheet.pdf
+- Ford Mustang GT S650: https://www.cjponyparts.com/resources/news/s650-mustang · https://www.musclecarsandtrucks.com/s650-ford-mustang-horsepower-numbers-are-now-official/

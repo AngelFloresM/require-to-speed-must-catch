@@ -34,8 +34,14 @@
     <section id="garage" class="screen hidden">
       <h2>Elige tu carro</h2>
       <div class="car-card">
-        <div id="car-name"></div>
+        <div class="car-pick">
+          <button id="car-prev" class="arrow" aria-label="Carro anterior">◀</button>
+          <div id="car-name"></div>
+          <button id="car-next" class="arrow" aria-label="Carro siguiente">▶</button>
+        </div>
+        <div id="car-type"></div>
         <div id="car-stats"></div>
+        <table id="car-info"></table>
       </div>
       <label>Vueltas
         <select id="laps">

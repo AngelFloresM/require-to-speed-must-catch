@@ -40,7 +40,7 @@ scene.add(buildTrack(track));
 
 // ---------- Estado del juego ----------
 const hud = new Hud();
-const playerCar = CARS[0];
+let carIndex = 0;
 let race = null;
 let meshes = [];
 let mode = 'menu'; // menu | racing | paused | results
@@ -56,8 +56,11 @@ const RIVALS = [
 
 function startRace() {
   for (const m of meshes) scene.remove(m.group);
+  const playerCar = CARS[carIndex];
   const spec = { ...playerCar.physics, color: playerCar.color };
-  const rivals = RIVALS.map((r, i) => ({ ...r, spec: playerCar.physics, color: RIVAL_COLORS[i] }));
+  // Los rivales usan el mismo carro que el jugador (carrera pareja).
+  const colors = RIVAL_COLORS.filter((c) => c !== playerCar.color);
+  const rivals = RIVALS.map((r, i) => ({ ...r, spec: playerCar.physics, color: colors[i] }));
   race = new Race(track, spec, { laps, rivals });
   race.onHit = (f) => (shake = Math.min(1, shake + f / 15));
   meshes = race.racers.map((r) => new CarMesh(r.car, r.color));
@@ -78,7 +81,18 @@ function toMenu() {
 document.querySelectorAll('[data-go]').forEach((b) =>
   b.addEventListener('click', () => showScreen(b.dataset.go)),
 );
-renderGarage(playerCar);
+renderGarage(CARS[carIndex]);
+function pickCar(dir) {
+  carIndex = (carIndex + dir + CARS.length) % CARS.length;
+  renderGarage(CARS[carIndex]);
+}
+document.getElementById('car-prev').addEventListener('click', () => pickCar(-1));
+document.getElementById('car-next').addEventListener('click', () => pickCar(1));
+window.addEventListener('keydown', (e) => {
+  if (document.getElementById('garage').classList.contains('hidden')) return;
+  if (e.code === 'ArrowLeft') pickCar(-1);
+  if (e.code === 'ArrowRight') pickCar(1);
+});
 document.getElementById('laps').addEventListener('change', (e) => (laps = Number(e.target.value)));
 document.getElementById('start').addEventListener('click', startRace);
 document.getElementById('again').addEventListener('click', startRace);
