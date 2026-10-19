@@ -6,6 +6,7 @@ import { buildTrack } from './render/trackMesh.js';
 import { CarMesh } from './render/carMesh.js';
 import { Vehicle } from './physics/vehicle.js';
 import { readInput } from './input.js';
+import { initControls, renderControls, leaveControls } from './ui/controls.js';
 import { Hud, showScreen, renderGarage, renderResults } from './ui/screens.js';
 
 // ---------- Escena ----------
@@ -88,8 +89,25 @@ function toMenu() {
 
 // ---------- Menús ----------
 document.querySelectorAll('[data-go]').forEach((b) =>
-  b.addEventListener('click', () => showScreen(b.dataset.go)),
+  b.addEventListener('click', () => {
+    if (b.dataset.go === 'controls') openControls('menu');
+    else showScreen(b.dataset.go);
+  }),
 );
+
+// Controles: se abren desde el menú o desde la pausa y regresan ahí.
+let controlsReturn = 'menu';
+function openControls(from) {
+  controlsReturn = from;
+  renderControls();
+  showScreen('controls');
+}
+initControls();
+document.getElementById('controls-back').addEventListener('click', () => {
+  leaveControls();
+  showScreen(controlsReturn);
+});
+document.getElementById('pause-controls').addEventListener('click', () => openControls('pause'));
 // Carro de muestra en el garaje (en el pasto, dentro del óvalo).
 let preview = null;
 function showPreview() {
@@ -192,8 +210,13 @@ function frame(now) {
   last = now;
   const input = readInput();
 
-  if (mode === 'racing' || mode === 'paused') {
-    if (input.actions.has('Escape')) {
+  const inControls = !document.getElementById('controls').classList.contains('hidden');
+  if (inControls && input.actions.has('pause')) {
+    // En la pantalla de controles, pausa/Esc solo regresa.
+    leaveControls();
+    showScreen(controlsReturn);
+  } else if (mode === 'racing' || mode === 'paused') {
+    if (input.actions.has('pause')) {
       mode = mode === 'racing' ? 'paused' : 'racing';
       showScreen(mode === 'paused' ? 'pause' : null);
     }
@@ -201,12 +224,12 @@ function frame(now) {
 
   if (mode === 'racing') {
     const p = race.player;
-    if (input.actions.has('KeyC')) camMode = (camMode + 1) % 2;
+    if (input.actions.has('camera')) camMode = (camMode + 1) % 2;
     if (!p.car.automatic && race.state === 'racing') {
-      if (input.actions.has('KeyE')) p.car.manualShift(1);
-      if (input.actions.has('KeyQ')) p.car.manualShift(-1);
+      if (input.actions.has('shiftUp')) p.car.manualShift(1);
+      if (input.actions.has('shiftDown')) p.car.manualShift(-1);
     }
-    if (input.actions.has('KeyR') && race.state === 'racing') race.respawn(p);
+    if (input.actions.has('reset') && race.state === 'racing') race.respawn(p);
     if (!p.finished) Object.assign(p.car.input, input);
 
     acc += dt;
