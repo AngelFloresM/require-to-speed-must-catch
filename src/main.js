@@ -196,6 +196,10 @@ function frame(now) {
   requestAnimationFrame(frame);
 }
 
+// Rama y commit publicados (lo pone el workflow de deploy).
+const build = import.meta.env.VITE_BUILD_INFO;
+if (build) document.getElementById('build-info').textContent = build.replace(/([0-9a-f]{7})[0-9a-f]{33}$/, '$1');
+
 showScreen('menu');
 requestAnimationFrame(frame);
 
