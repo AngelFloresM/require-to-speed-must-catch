@@ -71,3 +71,34 @@ test('carrera de IA: todos terminan 2 vueltas sin salir de la pista', () => {
     console.log(r.name, 'pos', r.position, 'tiempo', r.finishTime.toFixed(1), 'vueltas', r.lapTimes.map((x) => x.toFixed(1)).join(' '));
   }
 });
+
+test('cada carro: carrera de IA completa sin salir de la pista', () => {
+  for (const c of CARS) {
+    const t = new OvalTrack();
+    const rivals = [0, 1, 2].map((i) => ({ name: `R${i}`, spec: c.physics, lane: (i - 1) * 4, skill: 0.85 + i * 0.05 }));
+    const race = new Race(t, { ...c.physics, color: 0 }, { laps: 1, rivals });
+    for (let i = 0; i < 120 * 120 && !race.drivers.every((d) => d.racer.finished); i++) {
+      race.step();
+      for (const r of race.racers) {
+        const pr = t.project(r.car.x, r.car.y);
+        assert.ok(Math.abs(pr.d) < t.halfWidth + 0.5, `${c.name} ${r.name} fuera d=${pr.d}`);
+      }
+    }
+    for (const d of race.drivers) assert.ok(d.racer.finished, `${c.name} ${d.racer.name} no terminó`);
+    console.log(c.name, 'vuelta IA', Math.min(...race.drivers.map((d) => d.racer.finishTime)).toFixed(1), 's');
+  }
+});
+
+test('caja automática: sube de marcha y respeta el corte', () => {
+  for (const c of CARS) {
+    const car = new Vehicle(c.physics);
+    car.input.throttle = 1;
+    let maxGear = 1;
+    for (let i = 0; i < 120 * 30; i++) {
+      car.update(PHYSICS_DT);
+      maxGear = Math.max(maxGear, car.gear);
+      assert.ok(car.rpm <= c.physics.redline * 1.02, `${c.name} rpm ${car.rpm}`);
+    }
+    assert.ok(maxGear >= c.physics.gears.length - 1, `${c.name} llegó a ${maxGear}`);
+  }
+});
