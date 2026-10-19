@@ -10,6 +10,7 @@ import { Vehicle } from './physics/vehicle.js';
 import { readInput } from './input.js';
 import { initControls, renderControls, leaveControls } from './ui/controls.js';
 import { FreeMode } from './freeMode.js';
+import { MenuNav } from './ui/menuNav.js';
 import { Hud, showScreen, renderGarage, renderResults, renderTuning } from './ui/screens.js';
 import { applyTuning, defaultTuning } from './data/tuning.js';
 
@@ -214,6 +215,19 @@ document.getElementById('free-btn').addEventListener('click', () => {
   setGarageMode('free');
   showScreen('garage');
 });
+// Menús con el control: B regresa a la pantalla anterior.
+const BACK = {
+  controls: () => document.getElementById('controls-back').click(),
+  garage: () => showScreen('menu'),
+  tuning: () => showScreen('garage'),
+  pause: () => document.getElementById('resume').click(),
+  results: () => document.getElementById('back').click(),
+};
+const menuNav = new MenuNav({
+  onBack: (id) => BACK[id]?.(),
+  onCar: (dir) => pickCar(dir),
+});
+
 function startFree() {
   const car = CARS[carIndex];
   const spec = applyTuning(car.physics, tuning);
@@ -280,6 +294,7 @@ function frame(now) {
   const dt = Math.min((now - last) / 1000, 0.25);
   last = now;
   const input = readInput();
+  menuNav.update(dt);
 
   const inControls = !document.getElementById('controls').classList.contains('hidden');
   if (inControls && input.actions.has('pause')) {
