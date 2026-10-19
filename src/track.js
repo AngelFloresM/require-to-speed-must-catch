@@ -3,7 +3,7 @@
 // Sentido de carrera: antihorario. La meta está en (0, -radius).
 
 export class OvalTrack {
-  constructor({ straight = 400, radius = 90, width = 18 } = {}) {
+  constructor({ straight = 400, radius = 120, width = 20 } = {}) {
     this.straight = straight;
     this.radius = radius;
     this.width = width;
