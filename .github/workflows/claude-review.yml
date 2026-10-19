@@ -1,0 +1,37 @@
+# Revisión automática de cada PR con Claude.
+name: Claude Review
+
+on:
+  pull_request:
+    types: [opened, synchronize]
+
+permissions:
+  contents: read
+  pull-requests: write
+  id-token: write
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      # Se salta hasta que exista el secreto ANTHROPIC_API_KEY.
+      - if: env.ANTHROPIC_API_KEY != ''
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.pull_request.number }}
+
+            Revisa este PR de un juego de carreras para navegador (Three.js + Vite).
+            Enfócate en bugs, física/colisiones, rendimiento (60 fps) y seguridad.
+            Sé breve y escribe en español. Deja la revisión con `gh pr comment`.
+          claude_args: >-
+            --max-turns 10
+            --allowedTools "Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"
