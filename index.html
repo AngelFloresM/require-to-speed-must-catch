@@ -12,6 +12,7 @@
     <section id="menu" class="screen">
       <h1>REQUIRE TO SPEED<span>MUST CATCH</span></h1>
       <button data-go="garage">Carrera rápida</button>
+      <button id="free-btn">Modo libre · Tepic</button>
       <button data-go="controls">Controles</button>
       <div id="build-info"></div>
     </section>
@@ -42,7 +43,7 @@
         <p id="track-desc"></p>
       </div>
       <div class="options">
-        <label>Vueltas
+        <label class="race-only">Vueltas
           <select id="laps">
             <option>1</option><option selected>3</option><option>5</option>
           </select>
@@ -97,6 +98,11 @@
         <small>KM/H</small> <span id="h-gear"></span> <small id="h-mode"></small>
         <div class="nitro"><div id="h-nitro"></div></div>
       </div>
+    </div>
+
+    <div id="free-hud" class="hidden">
+      <canvas id="minimap" width="180" height="180"></canvas>
+      <div id="street"></div>
     </div>
 
     <script type="module" src="/src/main.js"></script>
