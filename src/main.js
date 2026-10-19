@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { trackBounds } from './track.js';
 import { TRACKS } from './data/tracks.js';
+import { MenuNav } from './ui/menuNav.js';
 import { Race, PHYSICS_DT } from './race.js';
 import { CARS } from './data/cars.js';
 import { pickRivals } from './rivals.js';
@@ -10,7 +11,6 @@ import { Vehicle } from './physics/vehicle.js';
 import { readInput } from './input.js';
 import { initControls, renderControls, leaveControls } from './ui/controls.js';
 import { FreeMode } from './freeMode.js';
-import { MenuNav } from './ui/menuNav.js';
 import { Hud, showScreen, renderGarage, renderResults, renderTuning } from './ui/screens.js';
 import { applyTuning, defaultTuning } from './data/tuning.js';
 
