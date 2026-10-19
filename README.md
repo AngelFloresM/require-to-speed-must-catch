@@ -10,6 +10,19 @@ Juego de carreras para navegador inspirado en *Need for Speed: Most Wanted (2005
 - Nitro, freno de mano (derrape), cámara de persecución y de cofre
 - Menú, garaje, pausa, resultados y HUD mínimo
 
+## Modo libre · Tepic
+
+Menú → **Modo libre · Tepic** → elige carro → **Manejar**. Es una parte del centro de Tepic, Nayarit
+(Catedral, Plaza Principal, Alameda, Parque Juan Escutia, Parque La Loma, río Mololoa, Av. México,
+Av. Ignacio Allende, Libramiento a Mazatlán, Av. Paseo de la Loma, Av. Jacarandas).
+
+- Calles trazadas a mano sobre una captura de Google Maps: posiciones y nombres aproximados.
+  Los datos están en `src/data/tepic.js`, para corregirlos fácilmente.
+- Avenidas de doble sentido (línea amarilla); calles de un sentido alternado (flechas blancas).
+  **Suposición**: falta confirmar el sentido real de cada calle.
+- Solo se maneja sobre las calles. Las que salen del área terminan en barreras rojo/blanco.
+- Minimapa abajo a la izquierda y nombre de la calle arriba.
+
 ## Cómo correrlo
 
 ```bash
@@ -68,6 +81,8 @@ src/
   race.js               reglas: vueltas, posiciones, cuenta regresiva
   render/               mallas 3D (Three.js)
   ui/screens.js         menús y HUD
+  city/                 ciudad del modo libre: calles, grafo de cruces, colisiones
+  freeMode.js           modo libre: escena, cámara, HUD de calle
   main.js               loop del juego, cámara
 docs/investigacion.md   cómo se hizo NFS Most Wanted y qué tomamos
 ```

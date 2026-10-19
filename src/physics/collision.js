@@ -9,6 +9,33 @@ function pointVelocity(car, rx, ry) {
   return { x: car.vx - car.yawRate * ry, y: car.vy + car.yawRate * rx };
 }
 
+// Empuja una esquina del carro fuera de un muro (n = normal hacia donde se
+// puede estar) y aplica rebote y raspón. Devuelve la velocidad del golpe (m/s).
+export function resolveWallContact(car, c, nx, ny, pen) {
+  car.x += nx * pen;
+  car.y += ny * pen;
+
+  const v = pointVelocity(car, c.rx, c.ry);
+  const vn = v.x * nx + v.y * ny;
+  if (vn >= 0) return 0;
+
+  const m = car.spec.mass;
+  const I = car.spec.inertia;
+  const rn = c.rx * ny - c.ry * nx;
+  const j = (-(1 + WALL_RESTITUTION) * vn) / (1 / m + (rn * rn) / I);
+  car.applyImpulse(nx * j, ny * j, c.rx, c.ry);
+
+  // Fricción contra el muro (raspón).
+  const tx = -ny;
+  const ty = nx;
+  const vt = v.x * tx + v.y * ty;
+  const rt = c.rx * ty - c.ry * tx;
+  let jt = -vt / (1 / m + (rt * rt) / I);
+  jt = Math.max(-WALL_FRICTION * j, Math.min(WALL_FRICTION * j, jt));
+  car.applyImpulse(tx * jt, ty * jt, c.rx, c.ry);
+  return -vn;
+}
+
 // Devuelve la fuerza del golpe más fuerte (m/s) para efectos/sonido.
 export function collideWithWalls(car, track) {
   const limit = track.halfWidth;
@@ -28,29 +55,7 @@ export function collideWithWalls(car, track) {
       ny = pr.ny;
     } else continue;
 
-    // Corrección de posición.
-    car.x += nx * pen;
-    car.y += ny * pen;
-
-    const v = pointVelocity(car, c.rx, c.ry);
-    const vn = v.x * nx + v.y * ny;
-    if (vn >= 0) continue;
-    hit = Math.max(hit, -vn);
-
-    const m = car.spec.mass;
-    const I = car.spec.inertia;
-    const rn = c.rx * ny - c.ry * nx;
-    const j = (-(1 + WALL_RESTITUTION) * vn) / (1 / m + (rn * rn) / I);
-    car.applyImpulse(nx * j, ny * j, c.rx, c.ry);
-
-    // Fricción contra el muro (raspón).
-    const tx = -ny;
-    const ty = nx;
-    const vt = v.x * tx + v.y * ty;
-    const rt = c.rx * ty - c.ry * tx;
-    let jt = -vt / (1 / m + (rt * rt) / I);
-    jt = Math.max(-WALL_FRICTION * j, Math.min(WALL_FRICTION * j, jt));
-    car.applyImpulse(tx * jt, ty * jt, c.rx, c.ry);
+    hit = Math.max(hit, resolveWallContact(car, c, nx, ny, pen));
   }
   return hit;
 }

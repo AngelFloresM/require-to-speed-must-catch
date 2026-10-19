@@ -7,6 +7,7 @@ import { CarMesh } from './render/carMesh.js';
 import { Vehicle } from './physics/vehicle.js';
 import { readInput } from './input.js';
 import { initControls, renderControls, leaveControls } from './ui/controls.js';
+import { FreeMode } from './freeMode.js';
 import { Hud, showScreen, renderGarage, renderResults, renderTuning } from './ui/screens.js';
 import { applyTuning, defaultTuning } from './data/tuning.js';
 
@@ -85,6 +86,8 @@ function startRace() {
 }
 
 function toMenu() {
+  freeMode.stop();
+  document.getElementById('hud').classList.remove('free');
   if (preview) scene.add(preview.group);
   mode = 'menu';
   hud.show(false);
@@ -147,19 +150,42 @@ gearboxSelect.addEventListener('change', (e) => {
     localStorage.setItem('gearbox', gearbox);
   } catch {}
 });
-document.getElementById('start').addEventListener('click', startRace);
+document.getElementById('start').addEventListener('click', () => (garageMode === 'free' ? startFree() : startRace()));
 document.getElementById('open-tuning').addEventListener('click', () => {
   renderTuning(CARS[carIndex], tuning);
   showScreen('tuning');
 });
 document.getElementById('again').addEventListener('click', startRace);
-document.getElementById('restart').addEventListener('click', startRace);
+document.getElementById('restart').addEventListener('click', () => (freeMode.active ? startFree() : startRace()));
 document.getElementById('back').addEventListener('click', toMenu);
 document.getElementById('quit').addEventListener('click', toMenu);
 document.getElementById('resume').addEventListener('click', () => {
-  mode = 'racing';
+  mode = freeMode.active ? 'free' : 'racing';
   showScreen(null);
 });
+
+// ---------- Modo libre (Tepic) ----------
+const freeMode = new FreeMode(camera);
+let garageMode = 'race';
+function setGarageMode(m) {
+  garageMode = m;
+  document.getElementById('garage').classList.toggle('free', m === 'free');
+  document.getElementById('start').textContent = m === 'free' ? 'Manejar' : 'Correr';
+}
+document.querySelector('#menu [data-go="garage"]').addEventListener('click', () => setGarageMode('race'));
+document.getElementById('free-btn').addEventListener('click', () => {
+  setGarageMode('free');
+  showScreen('garage');
+});
+function startFree() {
+  const car = CARS[carIndex];
+  const spec = applyTuning(car.physics, tuning);
+  freeMode.start({ car, spec, automatic: gearbox === 'auto' });
+  mode = 'free';
+  showScreen(null);
+  hud.show(true);
+  document.getElementById('hud').classList.add('free');
+}
 
 // ---------- Cámara ----------
 const camPos = new THREE.Vector3();
@@ -223,9 +249,10 @@ function frame(now) {
     // En la pantalla de controles, pausa/Esc solo regresa.
     leaveControls();
     showScreen(controlsReturn);
-  } else if (mode === 'racing' || mode === 'paused') {
+  } else if (mode === 'racing' || mode === 'free' || mode === 'paused') {
     if (input.actions.has('pause')) {
-      mode = mode === 'racing' ? 'paused' : 'racing';
+      const playing = freeMode.active ? 'free' : 'racing';
+      mode = mode === 'paused' ? playing : 'paused';
       showScreen(mode === 'paused' ? 'pause' : null);
     }
   }
@@ -257,6 +284,8 @@ function frame(now) {
         showScreen('results');
       }, 1500);
     }
+  } else if (mode === 'free') {
+    freeMode.update(dt, input, hud);
   } else if (mode === 'results') {
     acc += dt;
     while (acc >= PHYSICS_DT) {
@@ -282,7 +311,7 @@ function frame(now) {
     camera.lookAt(0, 0, 0);
   }
 
-  renderer.render(scene, camera);
+  renderer.render(freeMode.active ? freeMode.scene : scene, camera);
   requestAnimationFrame(frame);
 }
 
@@ -294,4 +323,4 @@ showScreen('menu');
 requestAnimationFrame(frame);
 
 // Acceso para pruebas en consola.
-window.__game = { get race() { return race; }, startRace };
+window.__game = { get race() { return race; }, startRace, freeMode };

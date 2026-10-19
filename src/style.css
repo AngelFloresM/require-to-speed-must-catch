@@ -91,3 +91,12 @@ button:disabled:hover, button:disabled:focus-visible { background: transparent; 
 .tune-slider input { width: 100%; accent-color: var(--accent); }
 .tune p { margin: 4px 0 0; font-size: 13px; opacity: 0.85; }
 .tune p.tip { color: var(--accent); opacity: 0.9; }
+
+/* Modo libre */
+#free-hud { position: fixed; inset: 0; pointer-events: none; }
+#minimap { position: absolute; left: 16px; bottom: 16px; width: 180px; height: 180px; }
+#street { position: absolute; top: 16px; left: 50%; transform: translateX(-50%); padding: 6px 14px;
+  background: rgba(10, 14, 20, 0.6); font-weight: bold; text-shadow: 0 1px 3px #000; white-space: nowrap; }
+#street:empty { display: none; }
+#hud.free .top-left, #hud.free .top-right { display: none; }
+#garage.free .race-only, #garage.free .track-pick { display: none; }
