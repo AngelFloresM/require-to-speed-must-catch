@@ -133,17 +133,12 @@ function wheel(radius, width) {
   return g;
 }
 
-// Construye el modelo. Devuelve { group, wheels, tailMat }.
-export function buildCarModel(spec, styleId, color) {
-  const style = STYLES[styleId] ?? STYLES.sports;
+// Secciones de carrocería y cabina (compartidas con el tráfico).
+function shellSections(spec, style) {
   const L = spec.length;
   const W = spec.width;
   const H = spec.height ?? 1.3;
   const clearance = 0.16;
-  const group = new THREE.Group();
-  const paint = new THREE.MeshPhongMaterial({ color, shininess: 70, specular: 0x555555 });
-
-  // Carrocería
   const body = [];
   for (let i = 0; i <= STATIONS; i++) {
     const x = -0.5 + i / STATIONS;
@@ -157,11 +152,6 @@ export function buildCarModel(spec, styleId, color) {
       wTop: half * 0.9,
     });
   }
-  const bodyMesh = new THREE.Mesh(loft(body, 5), paint);
-  bodyMesh.castShadow = true;
-  group.add(bodyMesh);
-
-  // Cabina (vidrios)
   const cx0 = style.cabin[0][0];
   const cx1 = style.cabin[style.cabin.length - 1][0];
   const cabin = [];
@@ -177,6 +167,33 @@ export function buildCarModel(spec, styleId, color) {
       wTop: half * 0.66,
     });
   }
+  return { body, cabin };
+}
+
+// Geometrías sueltas de carrocería y cabina, para dibujar muchos carros con
+// mallas instanciadas (tráfico).
+export function carShellGeometries(spec, styleId) {
+  const { body, cabin } = shellSections(spec, STYLES[styleId] ?? STYLES.sports);
+  return { body: loft(body, 5), cabin: loft(cabin, 3) };
+}
+
+// Construye el modelo. Devuelve { group, wheels, tailMat }.
+export function buildCarModel(spec, styleId, color) {
+  const style = STYLES[styleId] ?? STYLES.sports;
+  const L = spec.length;
+  const W = spec.width;
+  const H = spec.height ?? 1.3;
+  const clearance = 0.16;
+  const group = new THREE.Group();
+  const paint = new THREE.MeshPhongMaterial({ color, shininess: 70, specular: 0x555555 });
+
+  const { body, cabin } = shellSections(spec, style);
+  const bodyMesh = new THREE.Mesh(loft(body, 5), paint);
+  bodyMesh.castShadow = true;
+  group.add(bodyMesh);
+
+  // Cabina (vidrios)
+  const cx1 = style.cabin[style.cabin.length - 1][0];
   const cabinMesh = new THREE.Mesh(loft(cabin, 3), MATS.glass);
   cabinMesh.castShadow = true;
   group.add(cabinMesh);

@@ -22,6 +22,10 @@ Av. Ignacio Allende, Libramiento a Mazatlán, Av. Paseo de la Loma, Av. Jacarand
   **Suposición**: falta confirmar el sentido real de cada calle.
 - Solo se maneja sobre las calles. Las que salen del área terminan en barreras rojo/blanco.
 - Minimapa abajo a la izquierda y nombre de la calle arriba.
+- **Tráfico ligero** (24 carros) y **semáforos** en los cruces con avenida. Los carros manejan por
+  la derecha, respetan el sentido de cada calle, guardan distancia (también contigo), se detienen
+  en rojo y en cruces sin semáforo esperan si está ocupado.
+- Si te pasas un alto aparece "¡Te pasaste el alto!", y en contra del sentido "SENTIDO CONTRARIO".
 
 ## Cómo correrlo
 

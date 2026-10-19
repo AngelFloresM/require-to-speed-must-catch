@@ -57,6 +57,8 @@ button.arrow { min-width: 44px; padding: 6px 10px; }
 #street { position: absolute; top: 16px; left: 50%; transform: translateX(-50%); padding: 6px 14px;
   background: rgba(10, 14, 20, 0.6); font-weight: bold; text-shadow: 0 1px 3px #000; white-space: nowrap; }
 #street:empty { display: none; }
+#free-msg { position: absolute; top: 22%; width: 100%; text-align: center; font-size: 34px; font-weight: bold;
+  font-style: italic; color: #ff4040; text-shadow: 0 2px 4px #000; }
 #hud.free .top-left, #hud.free .top-right { display: none; }
 #garage.free .race-only, #garage.free .track-pick { display: none; }
 
