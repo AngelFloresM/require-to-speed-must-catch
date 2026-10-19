@@ -119,3 +119,12 @@ test('modo libre con tráfico: chocar a un carro lo detiene y avisa al pasarse e
   for (let i = 0; i < 120 * 2.5 && !ride2.message; i++) ride2.step(1 / 120);
   assert.equal(ride2.message?.text, '¡Te pasaste el alto!');
 });
+
+test('los postes de semáforo quedan sobre la banqueta', async () => {
+  const { drivableGap } = await import('../src/city/city.js');
+  // SignalMesh necesita three.js pero no DOM: se puede crear en Node.
+  const { SignalMesh } = await import('../src/render/trafficMesh.js');
+  const mesh = new SignalMesh(city);
+  const onRoad = mesh.heads.filter((h) => drivableGap(city, h.x, h.y).gap <= 0);
+  assert.ok(onRoad.length <= mesh.heads.length * 0.02, `${onRoad.length} de ${mesh.heads.length} postes sobre el asfalto`);
+});

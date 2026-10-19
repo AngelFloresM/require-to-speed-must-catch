@@ -1,6 +1,6 @@
 // Ciudad en 3D, sin texturas y con pocas mallas (edificios y árboles instanciados).
 import * as THREE from 'three';
-import { nearestRoad, pointInPolygon } from '../city/city.js';
+import { drivableGap, pointInPolygon } from '../city/city.js';
 import { RIVER, LANDMARKS } from '../data/tepic.js';
 
 const to3 = (x, y, h = 0) => new THREE.Vector3(x, h, -y);
@@ -144,6 +144,21 @@ export function buildCityMesh(city) {
     const r = Math.max(...n.edges.map((e) => e.road.width / 2));
     asphalt.disc(n.x, n.y, r * 1.05, 0.065);
   }
+  // Esquinas redondeadas: abanico desde la esquina K hasta el arco.
+  for (const f of city.fillets) {
+    const a0 = Math.atan2(f.T1[1] - f.c[1], f.T1[0] - f.c[0]);
+    let a1 = Math.atan2(f.T2[1] - f.c[1], f.T2[0] - f.c[0]);
+    let da = a1 - a0;
+    da = Math.atan2(Math.sin(da), Math.cos(da)); // el arco corto (del lado de K)
+    const steps = 6;
+    let prev = f.T1;
+    for (let i = 1; i <= steps; i++) {
+      const a = a0 + (da * i) / steps;
+      const p = [f.c[0] + Math.cos(a) * f.r, f.c[1] + Math.sin(a) * f.r];
+      asphalt.tri(f.K, prev, p, 0.065);
+      prev = p;
+    }
+  }
   group.add(asphalt.mesh(new THREE.MeshLambertMaterial({ color: 0x3b3e43 })));
 
   // Marcas: línea amarilla en doble sentido; flechas blancas en un sentido.
@@ -265,8 +280,8 @@ function buildBuildings(city, rand) {
     if (!pointInPolygon(x, y, city.boundary)) return false;
     if (city.parks.some((p) => pointInPolygon(x, y, p.poly))) return false;
     if (Math.hypot(x - LANDMARKS.cathedral[0], y - LANDMARKS.cathedral[1]) < 32) return false;
-    const nr = nearestRoad(city, x, y);
-    return !nr || nr.gap > 2.5; // deja banqueta
+    const g = drivableGap(city, x, y);
+    return !g || g.gap > 2.5; // deja banqueta
   };
   for (const e of city.edges) {
     const hw = e.road.width / 2;
