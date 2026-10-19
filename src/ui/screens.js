@@ -1,13 +1,14 @@
 // Menús y HUD (DOM simple, sin frameworks).
 import { measurePerformance } from '../data/performance.js';
+import { TUNING } from '../data/tuning.js';
 
 const $ = (id) => document.getElementById(id);
-const SCREENS = ['menu', 'controls', 'garage', 'pause', 'results'];
+const SCREENS = ['menu', 'controls', 'garage', 'tuning', 'pause', 'results'];
 
 export function showScreen(name) {
   for (const s of SCREENS) $(s).classList.toggle('hidden', s !== name);
   const first = name && $(name).querySelector('button');
-  if (first) first.focus();
+  if (first) first.focus({ preventScroll: true });
 }
 
 export function formatTime(t) {
@@ -33,6 +34,23 @@ export function renderGarage(car) {
   $('car-stats').innerHTML = rows
     .map(([label, k, value]) => `<div class="stat"><span>${label}</span><div class="bar"><div style="width:${perf.bars[k] * 10}%"></div></div><span class="value">${value}</span></div>`)
     .join('');
+}
+
+export function renderTuning(car, tuning) {
+  $('tuning-list').innerHTML = TUNING.map((t) => {
+    const v = tuning[t.id];
+    return `<div class="tune">
+      <div class="tune-head"><b>${t.label}</b><span class="tune-value">${v > 0 ? '+' : ''}${v}</span></div>
+      <div class="tune-slider">
+        <small>${t.left}</small>
+        <input type="range" min="-5" max="5" step="1" value="${v}" disabled aria-label="${t.label}" />
+        <small>${t.right}</small>
+      </div>
+      <p>${t.desc}</p>
+      <p class="tip">Consejo: ${t.tip}</p>
+    </div>`;
+  }).join('');
+  $('tuning').querySelector('h2').textContent = `Ajustes de rendimiento · ${car.name}`;
 }
 
 export function renderResults(race) {
