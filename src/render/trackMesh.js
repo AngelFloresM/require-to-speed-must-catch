@@ -79,8 +79,12 @@ export function buildTrack(track, theme = {}) {
   const cx = (b.minX + b.maxX) / 2;
   const cy = (b.minY + b.maxY) / 2;
 
+  // Piso dividido en cuadros de 100 m: un plano enorme de 2 triángulos se
+  // recorta mal contra la cámara a ras de suelo y puede tapar la pista.
+  const gw = b.maxX - b.minX + 1200;
+  const gh = b.maxY - b.minY + 1200;
   const ground = new THREE.Mesh(
-    new THREE.PlaneGeometry(b.maxX - b.minX + 1200, b.maxY - b.minY + 1200),
+    new THREE.PlaneGeometry(gw, gh, Math.ceil(gw / 100), Math.ceil(gh / 100)),
     new THREE.MeshLambertMaterial({ color: theme.ground ?? 0x4f7a3a }),
   );
   ground.rotation.x = -Math.PI / 2;
@@ -91,7 +95,7 @@ export function buildTrack(track, theme = {}) {
   const waterMat = new THREE.MeshLambertMaterial({ color: 0x2f7fb8 });
   // Mar al sur de la pista.
   if (theme.sea) {
-    const sea = new THREE.Mesh(new THREE.PlaneGeometry(b.maxX - b.minX + 1200, 600), waterMat);
+    const sea = new THREE.Mesh(new THREE.PlaneGeometry(b.maxX - b.minX + 1200, 600, Math.ceil((b.maxX - b.minX + 1200) / 100), 6), waterMat);
     sea.rotation.x = -Math.PI / 2;
     sea.position.set(cx, 0.03, -(b.minY + 30 - 300));
     group.add(sea);
