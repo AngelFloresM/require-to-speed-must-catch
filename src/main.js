@@ -48,6 +48,10 @@ let mode = 'menu'; // menu | racing | paused | results
 let camMode = 0;   // 0 = persecución, 1 = cofre
 let shake = 0;
 let laps = 3;
+let gearbox = 'auto';
+try {
+  gearbox = localStorage.getItem('gearbox') === 'manual' ? 'manual' : 'auto';
+} catch {}
 
 const RIVALS = [
   { name: 'Rojo', lane: -4, skill: 0.95 },
@@ -65,6 +69,7 @@ function startRace() {
   race = new Race(track, spec, { laps, rivals });
   race.onHit = (f) => (shake = Math.min(1, shake + f / 15));
   meshes = race.racers.map((r) => new CarMesh(r.car, r.color, playerCar.model));
+  race.player.car.automatic = gearbox === 'auto';
   for (const m of meshes) scene.add(m.group);
   snapCamera();
   if (preview) scene.remove(preview.group);
@@ -112,6 +117,14 @@ window.addEventListener('keydown', (e) => {
   if (e.code === 'ArrowRight') pickCar(1);
 });
 document.getElementById('laps').addEventListener('change', (e) => (laps = Number(e.target.value)));
+const gearboxSelect = document.getElementById('gearbox');
+gearboxSelect.value = gearbox;
+gearboxSelect.addEventListener('change', (e) => {
+  gearbox = e.target.value;
+  try {
+    localStorage.setItem('gearbox', gearbox);
+  } catch {}
+});
 document.getElementById('start').addEventListener('click', startRace);
 document.getElementById('again').addEventListener('click', startRace);
 document.getElementById('restart').addEventListener('click', startRace);
@@ -189,6 +202,10 @@ function frame(now) {
   if (mode === 'racing') {
     const p = race.player;
     if (input.actions.has('KeyC')) camMode = (camMode + 1) % 2;
+    if (!p.car.automatic && race.state === 'racing') {
+      if (input.actions.has('KeyE')) p.car.manualShift(1);
+      if (input.actions.has('KeyQ')) p.car.manualShift(-1);
+    }
     if (input.actions.has('KeyR') && race.state === 'racing') race.respawn(p);
     if (!p.finished) Object.assign(p.car.input, input);
 

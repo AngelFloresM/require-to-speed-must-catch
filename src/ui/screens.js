@@ -60,6 +60,9 @@ export class Hud {
     this.speed = $('h-speed');
     this.gear = $('h-gear');
     this.nitro = $('h-nitro');
+    this.rpm = $('h-rpm');
+    this.tach = this.rpm.parentElement;
+    this.mode = $('h-mode');
     this.center = $('h-center');
     this.cache = {};
   }
@@ -85,6 +88,15 @@ export class Hud {
     this.set('best', this.best, formatTime(p.lapTimes.length ? Math.min(...p.lapTimes) : Infinity));
     this.set('speed', this.speed, String(Math.round(Math.abs(car.forwardSpeed) * 3.6)));
     this.set('gear', this.gear, car.displayGear < 0 ? 'R' : String(car.displayGear ?? car.gear));
+    this.set('mode', this.mode, car.automatic ? 'AUTO' : 'MANUAL');
+    // Tacómetro: el rojo ocupa el último 10%; parpadea cuando conviene subir.
+    const rpm = Math.min(100, Math.round((car.rpm / car.spec.redline) * 90));
+    if (this.cache.rpm !== rpm) {
+      this.cache.rpm = rpm;
+      this.rpm.style.width = `${rpm}%`;
+    }
+    const shiftNow = !car.automatic && car.rpm > car.spec.redline * car.spec.upshiftAt && car.gear < car.spec.gears.length;
+    this.tach.classList.toggle('shift', shiftNow && Math.floor(performance.now() / 120) % 2 === 0);
     const nitro = Math.round((car.nitro / car.spec.nitroCapacity) * 100);
     if (this.cache.nitro !== nitro) {
       this.cache.nitro = nitro;
