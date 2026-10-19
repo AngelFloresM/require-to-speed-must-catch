@@ -20,6 +20,11 @@ export function formatTime(t) {
 export function renderGarage(car) {
   const perf = measurePerformance(car.physics);
   $('car-name').textContent = car.name;
+  $('car-type').textContent = car.info.tipo;
+  const labels = { motor: 'Motor', potencia: 'Potencia', torque: 'Torque', traccion: 'Tracción', caja: 'Caja', peso: 'Peso', frenos: 'Frenos' };
+  $('car-info').innerHTML = Object.entries(labels)
+    .map(([k, label]) => `<tr><td>${label}</td><td>${car.info[k]}</td></tr>`)
+    .join('');
   const rows = [
     ['Velocidad', 'topSpeed', `${Math.round(perf.topKmh)} km/h`],
     ['Aceleración', 'acceleration', `0-100 en ${perf.zeroTo100.toFixed(1)} s`],
@@ -79,7 +84,7 @@ export class Hud {
     this.set('time', this.time, formatTime(race.time - p.lapStart));
     this.set('best', this.best, formatTime(p.lapTimes.length ? Math.min(...p.lapTimes) : Infinity));
     this.set('speed', this.speed, String(Math.round(Math.abs(car.forwardSpeed) * 3.6)));
-    this.set('gear', this.gear, car.gear < 0 ? 'R' : String(car.gear));
+    this.set('gear', this.gear, car.displayGear < 0 ? 'R' : String(car.displayGear ?? car.gear));
     const nitro = Math.round((car.nitro / car.spec.nitroCapacity) * 100);
     if (this.cache.nitro !== nitro) {
       this.cache.nitro = nitro;

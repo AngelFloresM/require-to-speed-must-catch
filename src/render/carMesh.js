@@ -21,8 +21,9 @@ export class CarMesh {
     body.castShadow = true;
     this.group.add(body);
 
-    const cabin = new THREE.Mesh(new THREE.BoxGeometry(L * 0.45, 0.42, W * 0.82), glassMat);
-    cabin.position.set(-L * 0.05, 1.02, 0);
+    const cabinH = Math.max(0.35, (car.spec.height ?? 1.25) - 0.83);
+    const cabin = new THREE.Mesh(new THREE.BoxGeometry(L * 0.45, cabinH, W * 0.82), glassMat);
+    cabin.position.set(-L * 0.05, 0.82 + cabinH / 2, 0);
     cabin.castShadow = true;
     this.group.add(cabin);
 
