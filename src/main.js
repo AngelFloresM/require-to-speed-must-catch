@@ -95,7 +95,8 @@ function startRace() {
   const physics = applyTuning(playerCar.physics, tuning);
   const spec = { ...physics, color: playerCar.color };
   // Cada rival maneja un carro distinto al del jugador.
-  const rivals = pickRivals(playerCar.id);
+  // Iguala el rendimiento de los rivales al tuyo para que la carrera sea pareja.
+  const rivals = pickRivals(playerCar.id, { match: physics });
   race = new Race(track, spec, { laps, rivals });
   race.onHit = (f) => (shake = Math.min(1, shake + f / 15));
   meshes = race.racers.map((r) => new CarMesh(r.car, r.color, r.model ?? playerCar.model));
@@ -162,7 +163,7 @@ renderGarage(CARS[carIndex]);
 showPreview();
 function showRivals() {
   const names = pickRivals(CARS[carIndex].id).map((r) => r.name);
-  document.getElementById('rivals-info').textContent = `Rivales: ${names.join(', ')}`;
+  document.getElementById('rivals-info').textContent = `Rivales (igualados a tu carro): ${names.join(', ')}`;
 }
 showRivals();
 function pickCar(dir) {
