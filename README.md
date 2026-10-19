@@ -40,6 +40,8 @@ Si no, el deploy de ramas distintas a `main` es rechazado.
 
 ## Controles
 
+Se pueden cambiar en **Controles** (menú principal o pausa): 2 teclas y 1 entrada del control por acción, con botón × para quitar. Se guardan en el navegador. Valores por defecto:
+
 | Acción | Teclado | Control |
 |---|---|---|
 | Acelerar | W / ↑ | RT |
@@ -51,7 +53,7 @@ Si no, el deploy de ramas distintas a `main` es rechazado.
 | Bajar marcha (manual) | Q | LB |
 | Cámara | C | Back |
 | Volver a la pista | R | Y |
-| Pausa | Esc | Start |
+| Pausa | Esc / P | Start |
 
 ## Estructura
 
