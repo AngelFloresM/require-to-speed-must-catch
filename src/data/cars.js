@@ -35,6 +35,7 @@ const car = (physics) => ({ ...BASE, ...physics });
 export const CARS = [
   {
     id: 'raptor',
+    model: 'sports',
     name: 'Raptor GT',
     color: 0x2f7dd1,
     info: {
@@ -61,6 +62,7 @@ export const CARS = [
   },
   {
     id: 'marsh',
+    model: 'hatch',
     name: 'Nizan Marsh',
     color: 0xd9d9d9,
     info: {
@@ -88,6 +90,7 @@ export const CARS = [
   },
   {
     id: 'taikan',
+    model: 'sedan',
     name: 'Porshe Taikan Turbo S',
     color: 0x6b6f76,
     info: {
@@ -120,6 +123,7 @@ export const CARS = [
   },
   {
     id: 'mustank',
+    model: 'muscle',
     name: 'Fort Mustank GT',
     color: 0xc0392b,
     info: {

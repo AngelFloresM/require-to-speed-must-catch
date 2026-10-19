@@ -51,3 +51,12 @@ button.arrow { min-width: 44px; padding: 6px 10px; }
   font-weight: bold; font-style: italic; color: var(--accent); }
 #h-center.warn { font-size: 36px; color: #ff4040; }
 #build-info { position: absolute; bottom: 8px; left: 12px; font-size: 12px; opacity: 0.6; }
+
+/* Garaje: panel a la izquierda, el carro 3D se ve a la derecha. */
+#garage { background: linear-gradient(90deg, var(--panel) 0, var(--panel) 46%, transparent 70%);
+  align-items: flex-start; padding-left: max(16px, 6vw); }
+#garage > * { width: min(440px, 92vw); }
+#garage button, #garage label { align-self: stretch; }
+@media (max-width: 800px) {
+  #garage { background: var(--panel); align-items: center; padding-left: 0; }
+}
