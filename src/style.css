@@ -10,7 +10,7 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: #0b0e13; col
 .hidden { display: none !important; }
 
 .screen { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center;
-  justify-content: center; gap: 12px; background: var(--panel); }
+  justify-content: safe center; gap: 12px; background: var(--panel); overflow-y: auto; padding: 16px 0; }
 h1 { font-size: clamp(32px, 7vw, 72px); font-style: italic; letter-spacing: 2px; margin: 0 0 24px;
   text-align: center; color: var(--accent); }
 h1 span { display: block; font-size: 0.35em; color: var(--text); letter-spacing: 10px; }

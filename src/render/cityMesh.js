@@ -17,11 +17,26 @@ class FlatBuilder {
   constructor() {
     this.pos = [];
   }
+  // Guarda cada triángulo en orden antihorario visto desde arriba, para que
+  // su cara frontal apunte hacia el cielo.
   tri(a, b, c, h) {
-    for (const [x, y] of [a, b, c]) this.pos.push(x, h, -y);
+    const cross = (b[0] - a[0]) * (c[1] - a[1]) - (b[1] - a[1]) * (c[0] - a[0]);
+    const list = cross > 0 ? [a, b, c] : [a, c, b];
+    for (const [x, y] of list) this.pos.push(x, h, -y);
   }
   // Cinta a lo largo de una polilínea, entre desplazamientos laterales l0..l1 (+ = derecha).
+  // Los tramos largos se parten en pedazos de 15 m: los triángulos gigantes
+  // se recortan mal contra la cámara a ras de suelo y "desaparecen".
   ribbon(path, l0, l1, h) {
+    const pts = [];
+    for (let i = 0; i < path.length - 1; i++) {
+      const [ax, ay] = path[i];
+      const [bx, by] = path[i + 1];
+      const n = Math.max(1, Math.ceil(Math.hypot(bx - ax, by - ay) / 15));
+      for (let k = 0; k < n; k++) pts.push([ax + ((bx - ax) * k) / n, ay + ((by - ay) * k) / n]);
+    }
+    pts.push(path[path.length - 1]);
+    path = pts;
     for (let i = 0; i < path.length - 1; i++) {
       const [ax, ay] = path[i];
       const [bx, by] = path[i + 1];
@@ -42,7 +57,6 @@ class FlatBuilder {
     }
   }
   mesh(material) {
-    material.side = THREE.DoubleSide; // el cambio de ejes (y -> -z) invierte el orden de los vértices
     const g = new THREE.BufferGeometry();
     g.setAttribute('position', new THREE.Float32BufferAttribute(this.pos, 3));
     g.computeVertexNormals();
@@ -52,13 +66,40 @@ class FlatBuilder {
   }
 }
 
-function polygonMesh(poly, color, h) {
-  const shape = new THREE.Shape(poly.map(([x, y]) => new THREE.Vector2(x, y)));
-  const m = new THREE.Mesh(new THREE.ShapeGeometry(shape), new THREE.MeshLambertMaterial({ color, side: THREE.DoubleSide }));
-  m.rotation.x = -Math.PI / 2;
-  m.position.y = h;
-  m.receiveShadow = true;
-  return m;
+// Relleno de un polígono con baldosas (sin triángulos gigantes). Las baldosas
+// del borde se recortan en pasos más finos para que la orilla no se vea dentada.
+function polygonMesh(poly, color, h, tile = 20) {
+  const fb = new FlatBuilder();
+  const bb = bounds(poly);
+  const quad = (x, y, sz) => {
+    fb.tri([x, y], [x + sz, y], [x + sz, y + sz], h);
+    fb.tri([x, y], [x + sz, y + sz], [x, y + sz], h);
+  };
+  const fill = (x, y, sz) => {
+    const corners = [[x, y], [x + sz, y], [x + sz, y + sz], [x, y + sz], [x + sz / 2, y + sz / 2]];
+    const inside = corners.filter(([px, py]) => pointInPolygon(px, py, poly)).length;
+    if (inside === 5) quad(x, y, sz);
+    else if (sz > 2.5 && inside > 0) {
+      const hs = sz / 2;
+      fill(x, y, hs);
+      fill(x + hs, y, hs);
+      fill(x, y + hs, hs);
+      fill(x + hs, y + hs, hs);
+    } else if (inside >= 3) quad(x, y, sz);
+    else if (sz > 2.5) {
+      // la orilla puede cruzar una baldosa sin tocar sus esquinas
+      const hs = sz / 2;
+      for (const [ox, oy] of [[0, 0], [hs, 0], [0, hs], [hs, hs]]) {
+        const cx = x + ox + hs / 2;
+        const cy = y + oy + hs / 2;
+        if (pointInPolygon(cx, cy, poly)) fill(x + ox, y + oy, hs);
+      }
+    }
+  };
+  for (let x = Math.floor(bb.minX / tile) * tile; x < bb.maxX; x += tile) {
+    for (let y = Math.floor(bb.minY / tile) * tile; y < bb.maxY; y += tile) fill(x, y, tile);
+  }
+  return fb.mesh(new THREE.MeshLambertMaterial({ color }));
 }
 
 function bounds(poly) {
@@ -75,7 +116,14 @@ export function buildCityMesh(city) {
   const rand = rng(7);
 
   // Piso: afuera tierra/pasto; adentro banqueta y lotes (concreto).
-  const outside = new THREE.Mesh(new THREE.PlaneGeometry(b.maxX - b.minX + 3000, b.maxY - b.minY + 3000), new THREE.MeshLambertMaterial({ color: 0x8c9270 }));
+  // Dividido en cuadros de 100 m: un plano de 2 triángulos de varios km se
+  // recorta mal contra la cámara a ras de suelo y tapa las calles.
+  const ow = b.maxX - b.minX + 3000;
+  const oh = b.maxY - b.minY + 3000;
+  const outside = new THREE.Mesh(
+    new THREE.PlaneGeometry(ow, oh, Math.ceil(ow / 100), Math.ceil(oh / 100)),
+    new THREE.MeshLambertMaterial({ color: 0x8c9270 }),
+  );
   outside.rotation.x = -Math.PI / 2;
   outside.position.set(cx, -0.05, -cy);
   group.add(outside);
@@ -230,10 +278,10 @@ function buildBuildings(city, rand) {
       const f = [Math.cos(dir), Math.sin(dir)];
       const r = [Math.sin(dir), -Math.cos(dir)];
       for (const side of [1, -1]) {
-        let d = 4 + rand() * 4;
-        while (d < len - 4) {
-          const front = 8 + rand() * 7;
-          const depth = 10 + rand() * 8;
+        let d = 3 + rand() * 3;
+        while (d < len - 3) {
+          const front = 7 + rand() * 6;
+          const depth = 14 + rand() * 14;
           const off = side * (hw + 3 + depth / 2);
           const x = ax + f[0] * d + r[0] * off;
           const y = ay + f[1] * d + r[1] * off;
@@ -252,7 +300,7 @@ function buildBuildings(city, rand) {
             const floors = rand() < 0.08 ? 4 + Math.floor(rand() * 3) : 1 + Math.floor(rand() * 3);
             items.push({ x, y, dir, front, depth, h: floors * 3.3, color: PALETTE[Math.floor(rand() * PALETTE.length)] });
           }
-          d += front + 0.5;
+          d += front + 0.3;
         }
       }
     }
