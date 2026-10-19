@@ -4,10 +4,11 @@
 const G = 9.81;
 const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
 
-// Fuerza lateral normalizada: sube lineal hasta el pico y luego cae un poco (derrape).
+// Fuerza lateral normalizada: sube lineal hasta el pico y luego cae poco
+// (derrape controlable, no "hielo").
 function tireCurve(slip, peak) {
   const x = Math.abs(slip) / peak;
-  const f = x <= 1 ? x : Math.max(0.8, 1 - (x - 1) * 0.1);
+  const f = x <= 1 ? x : Math.max(0.92, 1 - (x - 1) * 0.04);
   return Math.sign(slip) * f;
 }
 
@@ -60,8 +61,20 @@ export class Vehicle {
     const speed = Math.hypot(vLong, vLat);
     const speedRatio = clamp(Math.abs(vLong) / this.topSpeed, 0, 1);
 
-    // Volante: menos giro a más velocidad (ayuda arcade).
-    const steerLimit = p.maxSteer + (p.minSteer - p.maxSteer) * speedRatio;
+    // Carga vertical: peso + carga aerodinámica (crece con v²).
+    const a = p.cgToFront;
+    const b = p.cgToRear;
+    const wheelbase = a + b;
+    const weight = p.mass * G;
+    const downforce = p.downforce * vLong * vLong;
+    const load = weight + downforce;
+    const gripG = (p.grip * load) / p.mass; // aceleración lateral máx. (m/s²)
+
+    // Volante: menos giro a más velocidad, y nunca más de lo que las llantas
+    // pueden sostener (evita que el frente "se lave" y el carro siga derecho).
+    const speedLimit = p.maxSteer + (p.minSteer - p.maxSteer) * speedRatio;
+    const gripLimit = (wheelbase * gripG) / Math.max(vLong * vLong, 1) + p.slipPeak * 0.8;
+    const steerLimit = Math.min(speedLimit, gripLimit);
     const target = inp.steer * steerLimit;
     const maxDelta = p.steerSpeed * dt;
     this.steer += clamp(target - this.steer, -maxDelta, maxDelta);
@@ -79,19 +92,17 @@ export class Vehicle {
       drive = inp.throttle * Math.min(maxF, power / Math.max(Math.abs(vLong), 1));
     }
     if (inp.brake > 0) {
-      if (vLong > 0.5) drive -= inp.brake * p.brakeForce;
+      // ABS: el freno nunca pasa del agarre disponible.
+      const maxBrake = Math.min(p.brakeForce, p.grip * load * 0.95);
+      if (vLong > 0.5) drive -= inp.brake * maxBrake;
       else if (vLong > -p.maxReverseSpeed) drive -= inp.brake * p.reverseForce; // reversa
     }
     if (inp.handbrake) drive -= Math.sign(vLong) * Math.min(p.brakeForce * 0.3, Math.abs(vLong) * p.mass * 4);
     const drag = -p.dragCoef * vLong * Math.abs(vLong) - p.rollingResistance * vLong;
 
     // Fuerzas laterales de las llantas.
-    const a = p.cgToFront;
-    const b = p.cgToRear;
-    const wheelbase = a + b;
-    const weight = p.mass * G;
-    const loadF = (weight * b) / wheelbase;
-    const loadR = (weight * a) / wheelbase;
+    const loadF = (load * b) / wheelbase;
+    const loadR = (load * a) / wheelbase;
     const denom = Math.max(Math.abs(vLong), 2);
     const dir = vLong >= 0 ? 1 : -1;
     const slipF = Math.atan2(vLat + this.yawRate * a, denom) - this.steer * dir;
@@ -112,9 +123,25 @@ export class Vehicle {
     this.vy += (aLong * sin + aLat * cos) * dt;
     this.yawRate += (torque / p.inertia) * dt;
 
-    // Ayudas de estabilidad: amortigua el giro y la deriva cuando no hay freno de mano.
-    const assist = inp.handbrake ? 0.5 : 2.0;
-    this.yawRate *= Math.exp(-assist * 0.5 * dt);
+    // Ayudas de estabilidad (estilo arcade):
+    // 1) El giro no pasa de lo que el agarre permite (evita trompos).
+    const v = Math.max(Math.abs(vLong), 5);
+    const maxYaw = (gripG / v) * (inp.handbrake ? p.driftYaw : 1.15);
+    const over = Math.abs(this.yawRate) - maxYaw;
+    if (over > 0) this.yawRate -= Math.sign(this.yawRate) * over * Math.min(1, 10 * dt);
+    // 2) La velocidad se alinea poco a poco con el frente del carro,
+    //    sin perder rapidez (así el derrape se recupera solo).
+    const sp = Math.hypot(this.vx, this.vy);
+    if (sp > 3) {
+      const velAng = Math.atan2(this.vy, this.vx);
+      const back = vLong < 0 ? Math.PI : 0;
+      let beta = velAng - (this.heading + back);
+      beta = Math.atan2(Math.sin(beta), Math.cos(beta));
+      const k = inp.handbrake ? p.driftAssist : p.gripAssist;
+      const newAng = velAng - beta * (1 - Math.exp(-k * dt));
+      this.vx = Math.cos(newAng) * sp;
+      this.vy = Math.sin(newAng) * sp;
+    }
 
     // A muy baja velocidad y sin acelerar, detener por completo.
     if (speed < 0.3 && inp.throttle === 0 && inp.brake === 0) {

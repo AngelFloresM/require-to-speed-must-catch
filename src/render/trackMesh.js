@@ -66,21 +66,21 @@ export function buildTrack(track) {
   group.add(ground);
 
   const vcMat = new THREE.MeshLambertMaterial({ vertexColors: true, side: THREE.DoubleSide });
-  const asphalt = new THREE.Mesh(ribbon(track, -hw, hw, 0.02, (i, c) => c.set(0x3a3d42)), vcMat);
+  const asphalt = new THREE.Mesh(ribbon(track, -hw, hw, 0.06, (i, c) => c.set(0x3a3d42)), vcMat);
   asphalt.receiveShadow = true;
   group.add(asphalt);
 
   // Bordes rojo/blanco (pianos).
   const kerbColor = (i, c) => c.set(Math.floor(i / 2) % 2 ? 0xd8d8d8 : 0xc0392b);
   for (const [a, b] of [[hw - 1.2, hw], [-hw, -hw + 1.2]]) {
-    const k = new THREE.Mesh(ribbon(track, a, b, 0.04, kerbColor), vcMat);
+    const k = new THREE.Mesh(ribbon(track, a, b, 0.12, kerbColor), vcMat);
     k.receiveShadow = true;
     group.add(k);
   }
 
   // Línea central discontinua.
   const dashColor = (i, c) => c.set(i % 3 === 0 ? 0xe8e8e8 : 0x3a3d42);
-  group.add(new THREE.Mesh(ribbon(track, -0.15, 0.15, 0.03, dashColor), vcMat));
+  group.add(new THREE.Mesh(ribbon(track, -0.15, 0.15, 0.12, dashColor), vcMat));
 
   // Muros.
   const wallMat = new THREE.MeshLambertMaterial({ color: 0x9aa3ad, side: THREE.DoubleSide });
@@ -97,7 +97,7 @@ export function buildTrack(track) {
     for (let j = 0; j < 2; j++) {
       const m = new THREE.Mesh(cell, (i + j) % 2 ? white : black);
       m.rotation.x = -Math.PI / 2;
-      m.position.set((j - 0.5) * size, 0.05, track.radius - hw + (i + 0.5) * size);
+      m.position.set((j - 0.5) * size, 0.14, track.radius - hw + (i + 0.5) * size);
       group.add(m);
     }
   }

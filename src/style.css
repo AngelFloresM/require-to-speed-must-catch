@@ -23,9 +23,10 @@ table { border-collapse: collapse; margin-bottom: 12px; }
 td, th { padding: 6px 16px; border-bottom: 1px solid #333; text-align: left; }
 tr.me td { color: var(--accent); font-weight: bold; }
 
-.car-card { width: min(360px, 90vw); padding: 16px; border: 1px solid #333; margin-bottom: 8px; }
+.car-card { width: min(440px, 92vw); padding: 16px; border: 1px solid #333; margin-bottom: 8px; }
 #car-name { font-size: 24px; font-weight: bold; margin-bottom: 12px; }
-.stat { display: grid; grid-template-columns: 110px 1fr; align-items: center; margin: 6px 0; font-size: 14px; }
+.stat { display: grid; grid-template-columns: 90px 1fr 130px; gap: 10px; align-items: center; margin: 6px 0; font-size: 14px; }
+.stat .value { text-align: right; font-variant-numeric: tabular-nums; opacity: 0.85; }
 .bar { height: 8px; background: #222; }
 .bar > div { height: 100%; background: var(--accent); }
 
