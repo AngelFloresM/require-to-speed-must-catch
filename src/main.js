@@ -140,6 +140,19 @@ document.getElementById('controls-back').addEventListener('click', () => {
   showScreen(controlsReturn);
 });
 document.getElementById('pause-controls').addEventListener('click', () => openControls('pause'));
+
+// Menús con el control: B regresa a la pantalla anterior.
+const BACK = {
+  controls: () => document.getElementById('controls-back').click(),
+  garage: () => showScreen('menu'),
+  tuning: () => showScreen('garage'),
+  pause: () => document.getElementById('resume').click(),
+  results: () => document.getElementById('back').click(),
+};
+const menuNav = new MenuNav({
+  onBack: (id) => BACK[id]?.(),
+  onCar: (dir) => pickCar(dir),
+});
 // Carro de muestra en el garaje: detrás de la meta de la pista elegida.
 let preview = null;
 function showPreview() {
@@ -215,19 +228,6 @@ document.getElementById('free-btn').addEventListener('click', () => {
   setGarageMode('free');
   showScreen('garage');
 });
-// Menús con el control: B regresa a la pantalla anterior.
-const BACK = {
-  controls: () => document.getElementById('controls-back').click(),
-  garage: () => showScreen('menu'),
-  tuning: () => showScreen('garage'),
-  pause: () => document.getElementById('resume').click(),
-  results: () => document.getElementById('back').click(),
-};
-const menuNav = new MenuNav({
-  onBack: (id) => BACK[id]?.(),
-  onCar: (dir) => pickCar(dir),
-});
-
 function startFree() {
   const car = CARS[carIndex];
   const spec = applyTuning(car.physics, tuning);
