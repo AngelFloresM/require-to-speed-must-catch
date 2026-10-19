@@ -59,7 +59,8 @@ button.arrow { min-width: 44px; padding: 6px 10px; }
 #street:empty { display: none; }
 #free-msg { position: absolute; top: 22%; width: 100%; text-align: center; font-size: 34px; font-weight: bold;
   font-style: italic; color: #ff4040; text-shadow: 0 2px 4px #000; }
-#hud.free .top-left, #hud.free .top-right { display: none; }
+#hud.free .top-left, #hud.free .top-right, #hud.free #race-minimap { display: none; }
+#race-minimap { position: absolute; left: 16px; bottom: 16px; width: 180px; height: 180px; }
 #garage.free .race-only, #garage.free .track-pick { display: none; }
 
 /* Garaje: panel a la izquierda, el carro 3D se ve a la derecha. */
