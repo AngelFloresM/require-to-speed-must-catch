@@ -3,7 +3,6 @@ import { Vehicle } from './physics/vehicle.js';
 import { collideWithCity } from './city/cityCollision.js';
 import { nearestRoad } from './city/city.js';
 import { Traffic } from './city/traffic.js';
-import { lightFor } from './city/signals.js';
 import { collideCars } from './physics/collision.js';
 
 // Cuerpo de un carro de tráfico para el choque con el jugador (pesado, sin giro).
@@ -27,12 +26,9 @@ export class FreeRide {
     this.player = { car: new Vehicle(spec), isPlayer: true };
     this.time = 0;
     this.onHit = null;
-    this.message = null; // { text, until }
-    this.wrongWayTime = 0;
     const s = city.spawn;
     this.player.car.place(s.x, s.y, s.heading);
     this.traffic = traffic ? new Traffic(city, { count: traffic, avoid: s }) : null;
-    this.lastNode = null;
   }
 
   step(dt) {
@@ -55,35 +51,6 @@ export class FreeRide {
     }
     if (hit > 3 && this.onHit) this.onHit(hit);
     this.time += dt;
-    this.checkRules(dt);
-  }
-
-  // Avisos: pasarse el rojo e ir en sentido contrario.
-  checkRules(dt) {
-    const car = this.player.car;
-    const nr = nearestRoad(this.city, car.x, car.y);
-    if (!nr || nr.gap > 1) return;
-    const { edge, seg } = nr;
-    const sx = seg.bx - seg.ax;
-    const sy = seg.by - seg.ay;
-    const len = Math.hypot(sx, sy) || 1;
-    const along = (car.vx * sx + car.vy * sy) / len; // + = en el orden del trazo
-    const ow = edge.road.oneway;
-    this.wrongWayTime = ow && along * ow < -3 ? this.wrongWayTime + dt : 0;
-
-    // ¿Entra a un cruce con semáforo en rojo?
-    if (Math.abs(along) < 3) return;
-    const node = along > 0 ? edge.b : edge.a;
-    if (!node.signal) return;
-    const d = Math.hypot(car.x - node.x, car.y - node.y);
-    const r = Math.max(...node.edges.map((e) => e.road.width / 2)) + 2;
-    if (d < r && this.lastNode !== node) {
-      this.lastNode = node;
-      if (lightFor(node, edge, this.traffic ? this.traffic.time : this.time) === 'red') {
-        this.message = { text: '¡Te pasaste el alto!', until: this.time + 2.5 };
-      }
-    }
-    if (d > r + 5 && this.lastNode === node) this.lastNode = null;
   }
 
   // Calle en la que está el jugador (o null).

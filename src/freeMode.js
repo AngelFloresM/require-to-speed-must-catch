@@ -77,7 +77,7 @@ export class FreeMode {
     p.position = 1;
     p.lapTimes = [];
     p.lapStart = 0;
-    p.wrongWayTime = this.ride.wrongWayTime;
+    p.wrongWayTime = 0; // en modo libre no hay reglas que avisar
     return { player: p, racers: [p], laps: 1, currentLap: 1, time: this.ride.time, state: 'racing' };
   }
 
@@ -100,11 +100,6 @@ export class FreeMode {
     this.trafficMesh.update();
     this.signalMesh.update(this.ride.traffic.time);
     this.updateCamera(dt);
-    const msg = this.ride.message && this.ride.time < this.ride.message.until ? this.ride.message.text : '';
-    if (this.lastMsg !== msg) {
-      this.lastMsg = msg;
-      $('free-msg').textContent = msg;
-    }
     hud.update(this.hudView());
 
     const road = this.ride.street();

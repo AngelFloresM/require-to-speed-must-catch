@@ -25,7 +25,7 @@ Av. Ignacio Allende, Libramiento a Mazatlán, Av. Paseo de la Loma, Av. Jacarand
 - **Tráfico ligero** (24 carros) y **semáforos** en los cruces con avenida. Los carros manejan por
   la derecha, respetan el sentido de cada calle, guardan distancia (también contigo), se detienen
   en rojo y en cruces sin semáforo esperan si está ocupado.
-- Si te pasas un alto aparece "¡Te pasaste el alto!", y en contra del sentido "SENTIDO CONTRARIO".
+- En modo libre no hay reglas para ti: no hay avisos por pasarte un alto o ir en sentido contrario.
 
 ## Cómo correrlo
 
