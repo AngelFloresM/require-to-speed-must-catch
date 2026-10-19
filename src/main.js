@@ -4,6 +4,7 @@ import { Race, PHYSICS_DT } from './race.js';
 import { CARS, RIVAL_COLORS } from './data/cars.js';
 import { buildTrack } from './render/trackMesh.js';
 import { CarMesh } from './render/carMesh.js';
+import { Vehicle } from './physics/vehicle.js';
 import { readInput } from './input.js';
 import { Hud, showScreen, renderGarage, renderResults } from './ui/screens.js';
 
@@ -63,15 +64,18 @@ function startRace() {
   const rivals = RIVALS.map((r, i) => ({ ...r, spec: playerCar.physics, color: colors[i] }));
   race = new Race(track, spec, { laps, rivals });
   race.onHit = (f) => (shake = Math.min(1, shake + f / 15));
-  meshes = race.racers.map((r) => new CarMesh(r.car, r.color));
+  meshes = race.racers.map((r) => new CarMesh(r.car, r.color, playerCar.model));
   for (const m of meshes) scene.add(m.group);
   snapCamera();
+  if (preview) scene.remove(preview.group);
+  camera.clearViewOffset();
   mode = 'racing';
   showScreen(null);
   hud.show(true);
 }
 
 function toMenu() {
+  if (preview) scene.add(preview.group);
   mode = 'menu';
   hud.show(false);
   showScreen('menu');
@@ -81,10 +85,24 @@ function toMenu() {
 document.querySelectorAll('[data-go]').forEach((b) =>
   b.addEventListener('click', () => showScreen(b.dataset.go)),
 );
+// Carro de muestra en el garaje (en el pasto, dentro del óvalo).
+let preview = null;
+function showPreview() {
+  if (preview) scene.remove(preview.group);
+  const c = CARS[carIndex];
+  const v = new Vehicle(c.physics);
+  v.place(0, 0, 0);
+  preview = new CarMesh(v, c.color, c.model);
+  preview.sync(0);
+  scene.add(preview.group);
+}
+
 renderGarage(CARS[carIndex]);
+showPreview();
 function pickCar(dir) {
   carIndex = (carIndex + dir + CARS.length) % CARS.length;
   renderGarage(CARS[carIndex]);
+  showPreview();
 }
 document.getElementById('car-prev').addEventListener('click', () => pickCar(-1));
 document.getElementById('car-next').addEventListener('click', () => pickCar(1));
@@ -199,7 +217,17 @@ function frame(now) {
     }
     for (const m of meshes) m.sync(dt);
     updateCamera(dt);
+  } else if (mode === 'menu' && !document.getElementById('garage').classList.contains('hidden')) {
+    // Garaje: la cámara gira alrededor del carro elegido (a la derecha del panel).
+    menuAngle += dt * 0.3;
+    const d = 7.5;
+    camera.position.set(Math.cos(menuAngle) * d, 2.2, Math.sin(menuAngle) * d);
+    camera.lookAt(0, 0.6, 0);
+    camera.setViewOffset(window.innerWidth, window.innerHeight, -window.innerWidth * 0.22, 0, window.innerWidth, window.innerHeight);
+    sun.position.set(20, 40, 15);
+    sun.target.position.set(0, 0, 0);
   } else if (mode === 'menu') {
+    camera.clearViewOffset();
     // Cámara girando sobre la pista en el menú.
     menuAngle += dt * 0.05;
     camera.position.set(Math.cos(menuAngle) * 380, 120, Math.sin(menuAngle) * 260);
