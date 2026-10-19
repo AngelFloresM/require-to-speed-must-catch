@@ -36,7 +36,9 @@ export function readInput() {
     const down = pad.buttons.map((x) => x.pressed);
     if (down[9] && !padPrev[9]) actions.add('Escape');
     if (down[3] && !padPrev[3]) actions.add('KeyR');
-    if (down[5] && !padPrev[5]) actions.add('KeyC');
+    if (down[8] && !padPrev[8]) actions.add('KeyC');
+    if (down[5] && !padPrev[5]) actions.add('KeyE');
+    if (down[4] && !padPrev[4]) actions.add('KeyQ');
     padPrev = down;
   }
   return { throttle, brake, steer, handbrake, nitro, actions };

@@ -24,7 +24,9 @@
         <tr><td>Girar</td><td>A D / ← → · stick</td></tr>
         <tr><td>Freno de mano</td><td>Espacio · A</td></tr>
         <tr><td>Nitro</td><td>Shift · X</td></tr>
-        <tr><td>Cámara</td><td>C · RB</td></tr>
+        <tr><td>Subir marcha (manual)</td><td>E · RB</td></tr>
+        <tr><td>Bajar marcha (manual)</td><td>Q · LB</td></tr>
+        <tr><td>Cámara</td><td>C · Back</td></tr>
         <tr><td>Volver a la pista</td><td>R · Y</td></tr>
         <tr><td>Pausa</td><td>Esc · Start</td></tr>
       </table>
@@ -43,11 +45,19 @@
         <div id="car-stats"></div>
         <table id="car-info"></table>
       </div>
-      <label>Vueltas
-        <select id="laps">
-          <option>1</option><option selected>3</option><option>5</option>
-        </select>
-      </label>
+      <div class="options">
+        <label>Vueltas
+          <select id="laps">
+            <option>1</option><option selected>3</option><option>5</option>
+          </select>
+        </label>
+        <label>Caja
+          <select id="gearbox">
+            <option value="auto">Automática</option>
+            <option value="manual">Manual</option>
+          </select>
+        </label>
+      </div>
       <button id="start">Correr</button>
       <button data-go="menu">Volver</button>
     </section>
@@ -77,8 +87,9 @@
       </div>
       <div id="h-center"></div>
       <div class="bottom-right">
+        <div class="tach"><div id="h-rpm"></div><div class="redzone"></div></div>
         <div id="h-speed"></div>
-        <small>KM/H</small> <span id="h-gear"></span>
+        <small>KM/H</small> <span id="h-gear"></span> <small id="h-mode"></small>
         <div class="nitro"><div id="h-nitro"></div></div>
       </div>
     </div>

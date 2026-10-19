@@ -102,3 +102,36 @@ test('caja automática: sube de marcha y respeta el corte', () => {
     assert.ok(maxGear >= c.physics.gears.length - 1, `${c.name} llegó a ${maxGear}`);
   }
 });
+
+test('caja manual: no cambia sola, sube a mano y no deja pasarse del corte al bajar', () => {
+  const spec = CARS.find((c) => c.id === 'mustank').physics;
+  const car = new Vehicle(spec);
+  car.automatic = false;
+  car.input.throttle = 1;
+  for (let i = 0; i < 120 * 6; i++) car.update(PHYSICS_DT);
+  assert.equal(car.gear, 1, 'en manual no sube sola');
+  assert.ok(car.rpm <= spec.redline * 1.02, 'respeta el corte');
+  for (let g = 2; g <= 4; g++) {
+    assert.ok(car.manualShift(1), `sube a ${g}`);
+    for (let i = 0; i < 120 * 3; i++) car.update(PHYSICS_DT);
+  }
+  assert.equal(car.gear, 4);
+  // A esta velocidad, 1ra pasaría del corte: bajar de 2da a 1ra se rechaza.
+  car.gear = 2;
+  assert.equal(car.manualShift(-1), false);
+  assert.equal(car.gear, 2);
+  assert.ok(car.manualShift(1), 'subir sí se permite');
+});
+
+test('freno de motor: soltar el acelerador frena más en marcha baja', () => {
+  const spec = CARS.find((c) => c.id === 'mustank').physics;
+  const decel = (gear) => {
+    const car = new Vehicle(spec);
+    car.automatic = false;
+    car.gear = gear;
+    car.vx = 20;
+    for (let i = 0; i < 120; i++) car.update(PHYSICS_DT);
+    return 20 - car.speed;
+  };
+  assert.ok(decel(2) > decel(5));
+});

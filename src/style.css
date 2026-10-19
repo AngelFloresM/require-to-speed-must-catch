@@ -60,3 +60,10 @@ button.arrow { min-width: 44px; padding: 6px 10px; }
 @media (max-width: 800px) {
   #garage { background: var(--panel); align-items: center; padding-left: 0; }
 }
+
+.options { display: flex; gap: 16px; justify-content: space-between; }
+.options select { min-width: 0; }
+.tach { position: relative; width: 220px; height: 10px; background: #222; margin: 0 0 6px auto; }
+#h-rpm { height: 100%; width: 0; background: #e8e8e8; }
+.tach .redzone { position: absolute; top: 0; right: 0; height: 100%; width: 10%; background: rgba(255, 60, 60, 0.45); }
+.tach.shift #h-rpm { background: #ff3c3c; }

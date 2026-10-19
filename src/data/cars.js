@@ -25,6 +25,7 @@ const BASE = {
   upshiftAt: 0.94,        // caja automática: sube cerca del corte
   downshiftAt: 0.62,      // baja si la marcha anterior queda bajo este % de RPM
   shiftTime: 0.35,        // s sin empuje durante el cambio
+  engineBraking: 0.12,    // fracción del torque que frena al soltar el acelerador
   nitroPower: 1.4,        // multiplicador de empuje con nitro
   nitroCapacity: 4,       // s de nitro
   nitroRecharge: 0.12,    // s de nitro recargados por segundo
