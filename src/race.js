@@ -54,8 +54,8 @@ export class Race {
       const side = i % 2 === 0 ? -3.5 : 3.5;
       const s = this.track.length - 8 - row * 9;
       const p = this.track.pointAt(s);
-      // y negativa = afuera en la recta de abajo
-      r.car.place(p.x, p.y + side, p.heading);
+      // side > 0 = a la derecha del sentido de carrera
+      r.car.place(p.x + Math.sin(p.heading) * side, p.y - Math.cos(p.heading) * side, p.heading);
       r.lastS = s;
       r.dist = s - this.track.length;
     });

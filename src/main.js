@@ -1,5 +1,6 @@
 import * as THREE from 'three';
-import { OvalTrack } from './track.js';
+import { trackBounds } from './track.js';
+import { TRACKS } from './data/tracks.js';
 import { Race, PHYSICS_DT } from './race.js';
 import { CARS } from './data/cars.js';
 import { pickRivals } from './rivals.js';
@@ -39,8 +40,36 @@ function resize() {
 window.addEventListener('resize', resize);
 resize();
 
-const track = new OvalTrack();
-scene.add(buildTrack(track));
+// ---------- Pista ----------
+let trackIndex = 0;
+let track = null;
+let trackGroup = null;
+let trackView = { x: 0, y: 0, rx: 380, ry: 260 }; // centro y radios de la cámara del menú
+
+function disposeGroup(group) {
+  group.traverse((o) => {
+    o.geometry?.dispose();
+    if (o.material) for (const m of [].concat(o.material)) m.dispose();
+  });
+}
+
+function loadTrack(i) {
+  trackIndex = i;
+  const def = TRACKS[i];
+  if (trackGroup) {
+    scene.remove(trackGroup);
+    disposeGroup(trackGroup);
+  }
+  track = def.build();
+  trackGroup = buildTrack(track, def.theme);
+  scene.add(trackGroup);
+  scene.background.set(def.theme.sky);
+  scene.fog.color.set(def.theme.sky);
+  const b = trackBounds(track);
+  trackView = { x: (b.minX + b.maxX) / 2, y: (b.minY + b.maxY) / 2, rx: (b.maxX - b.minX) * 0.75, ry: (b.maxY - b.minY) * 0.75 };
+  document.getElementById('track-desc').textContent = def.desc;
+  if (preview) showPreview();
+}
 
 // ---------- Estado del juego ----------
 const hud = new Hud();
@@ -107,17 +136,24 @@ document.getElementById('controls-back').addEventListener('click', () => {
   showScreen(controlsReturn);
 });
 document.getElementById('pause-controls').addEventListener('click', () => openControls('pause'));
-// Carro de muestra en el garaje (en el pasto, dentro del óvalo).
+// Carro de muestra en el garaje: detrás de la meta de la pista elegida.
 let preview = null;
 function showPreview() {
   if (preview) scene.remove(preview.group);
   const c = CARS[carIndex];
   const v = new Vehicle(c.physics);
-  v.place(0, 0, 0);
+  const p = track.pointAt(-15);
+  v.place(p.x, p.y, p.heading);
   preview = new CarMesh(v, c.color, c.model);
   preview.sync(0);
   scene.add(preview.group);
 }
+
+// Selector de pista.
+const trackSelect = document.getElementById('track');
+trackSelect.innerHTML = TRACKS.map((t, i) => `<option value="${i}">${t.name}</option>`).join('');
+trackSelect.addEventListener('change', (e) => loadTrack(Number(e.target.value)));
+loadTrack(0);
 
 renderGarage(CARS[carIndex]);
 showPreview();
@@ -270,17 +306,19 @@ function frame(now) {
     // Garaje: la cámara gira alrededor del carro elegido (a la derecha del panel).
     menuAngle += dt * 0.3;
     const d = 7.5;
-    camera.position.set(Math.cos(menuAngle) * d, 2.2, Math.sin(menuAngle) * d);
-    camera.lookAt(0, 0.6, 0);
+    const { x, y } = preview.car;
+    camera.position.set(x + Math.cos(menuAngle) * d, 2.2, -y + Math.sin(menuAngle) * d);
+    camera.lookAt(x, 0.6, -y);
     camera.setViewOffset(window.innerWidth, window.innerHeight, -window.innerWidth * 0.22, 0, window.innerWidth, window.innerHeight);
-    sun.position.set(20, 40, 15);
-    sun.target.position.set(0, 0, 0);
+    sun.position.set(x + 20, 40, -y + 15);
+    sun.target.position.set(x, 0, -y);
   } else if (mode === 'menu') {
     camera.clearViewOffset();
     // Cámara girando sobre la pista en el menú.
     menuAngle += dt * 0.05;
-    camera.position.set(Math.cos(menuAngle) * 380, 120, Math.sin(menuAngle) * 260);
-    camera.lookAt(0, 0, 0);
+    const v = trackView;
+    camera.position.set(v.x + Math.cos(menuAngle) * v.rx, 140, -v.y + Math.sin(menuAngle) * v.ry);
+    camera.lookAt(v.x, 0, -v.y);
   }
 
   renderer.render(scene, camera);

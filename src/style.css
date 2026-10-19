@@ -63,6 +63,9 @@ button.arrow { min-width: 44px; padding: 6px 10px; }
 
 .options { display: flex; gap: 16px; justify-content: space-between; }
 .options select { min-width: 0; }
+.track-pick select { min-width: 0; flex: 1; margin-left: 8px; }
+.track-pick label { display: flex; align-items: center; }
+#track-desc { margin: 6px 0 0; font-size: 13px; opacity: 0.8; min-height: 2.4em; }
 .tach { position: relative; width: 220px; height: 10px; background: #222; margin: 0 0 6px auto; }
 #h-rpm { height: 100%; width: 0; background: #e8e8e8; }
 .tach .redzone { position: absolute; top: 0; right: 0; height: 100%; width: 10%; background: rgba(255, 60, 60, 0.45); }
