@@ -27,6 +27,17 @@ Cada push a `main` corre las pruebas, construye y publica en
 
 Una sola vez: en GitHub ve a **Settings → Pages → Source** y elige **GitHub Actions**.
 
+## Calidad y seguridad
+
+| Herramienta | Qué hace | Configuración |
+|---|---|---|
+| SonarQube Cloud | Calidad, bugs y cobertura en cada PR | `sonar-project.properties`, `.github/workflows/sonar.yml`, secreto `SONAR_TOKEN` |
+| Snyk | Vulnerabilidades en dependencias | App de GitHub (snyk.io), sin archivos |
+| Claude | Revisa cada PR y responde a `@claude` | `.github/workflows/claude*.yml`, secreto `ANTHROPIC_API_KEY` |
+
+Los pasos de Sonar y de revisión de Claude se saltan solos si falta su secreto.
+En SonarQube Cloud desactiva **Automatic Analysis** (Administration → Analysis Method), porque el análisis corre en GitHub Actions.
+
 ## Controles
 
 | Acción | Teclado | Control |
