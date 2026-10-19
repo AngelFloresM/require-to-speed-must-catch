@@ -140,9 +140,11 @@ export class Vehicle {
     const front = p.drivetrain === 'FWD' ? 1 : p.drivetrain === 'AWD' ? p.awdFront : 0;
     let fxF = drive * front;
     let fxR = drive * (1 - front);
-    this.wheelspin = Math.abs(fxF) > muF || Math.abs(fxR) > muR;
-    fxF = clamp(fxF, -muF, muF);
-    fxR = clamp(fxR, -muR, muR);
+    // tractionScale: solo lo usan los rivales igualados (ver balance.js).
+    const tr = p.tractionScale ?? 1;
+    this.wheelspin = Math.abs(fxF) > muF * tr || Math.abs(fxR) > muR * tr;
+    fxF = clamp(fxF, -muF * tr, muF * tr);
+    fxR = clamp(fxR, -muR * tr, muR * tr);
 
     // Frenos con reparto (bias) y ABS por eje.
     const dir = vLong >= 0 ? 1 : -1;
