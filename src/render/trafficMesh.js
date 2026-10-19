@@ -4,6 +4,7 @@ import * as THREE from 'three';
 import { CARS } from '../data/cars.js';
 import { carShellGeometries } from './carModels.js';
 import { lightFor, approachHeading } from '../city/signals.js';
+import { FILLET, drivableGap } from '../city/city.js';
 
 const PAINT = [0xf2f2f2, 0x1d1d1d, 0x9aa0a6, 0xb03a2e, 0x2e5c9a, 0xd9c27a, 0x2f6b4f, 0x6d4c8a];
 
@@ -72,10 +73,24 @@ export class SignalMesh {
         const toward = e.b === node ? 1 : -1;
         if (e.road.oneway && e.road.oneway !== toward) continue; // nadie llega por aquí
         const h = approachHeading(e, node);
-        const back = r + 0.5;
-        const side = e.road.width / 2 + 0.8;
-        const x = node.x - Math.cos(h) * back + Math.sin(h) * side;
-        const y = node.y - Math.sin(h) * back - Math.cos(h) * side;
+        // Busca el primer punto de banqueta (fuera de calles y esquinas
+        // redondeadas): primero a la derecha, luego a la izquierda del acceso.
+        let spot = null;
+        search: for (const sign of [1, -1]) {
+          for (const back of [r + FILLET, r + FILLET + 4, r + 1, r + FILLET + 8, r + FILLET + 14]) {
+            for (let side = e.road.width / 2 + 0.6; side < e.road.width / 2 + 9; side += 0.5) {
+              const x = node.x - Math.cos(h) * back + Math.sin(h) * side * sign;
+              const y = node.y - Math.sin(h) * back - Math.cos(h) * side * sign;
+              const g = drivableGap(city, x, y);
+              if (!g || g.gap > 0.4) {
+                spot = { x, y };
+                break search;
+              }
+            }
+          }
+        }
+        if (!spot) continue; // sin banqueta cerca: no se dibuja ese poste
+        const { x, y } = spot;
         this.heads.push({ node, edge: e, x, y, h, state: null });
       }
     }

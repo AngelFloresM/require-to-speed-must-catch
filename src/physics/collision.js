@@ -11,7 +11,7 @@ function pointVelocity(car, rx, ry) {
 
 // Empuja una esquina del carro fuera de un muro (n = normal hacia donde se
 // puede estar) y aplica rebote y raspón. Devuelve la velocidad del golpe (m/s).
-export function resolveWallContact(car, c, nx, ny, pen) {
+export function resolveWallContact(car, c, nx, ny, pen, { restitution = WALL_RESTITUTION, friction = WALL_FRICTION } = {}) {
   car.x += nx * pen;
   car.y += ny * pen;
 
@@ -22,7 +22,7 @@ export function resolveWallContact(car, c, nx, ny, pen) {
   const m = car.spec.mass;
   const I = car.spec.inertia;
   const rn = c.rx * ny - c.ry * nx;
-  const j = (-(1 + WALL_RESTITUTION) * vn) / (1 / m + (rn * rn) / I);
+  const j = (-(1 + restitution) * vn) / (1 / m + (rn * rn) / I);
   car.applyImpulse(nx * j, ny * j, c.rx, c.ry);
 
   // Fricción contra el muro (raspón).
@@ -31,7 +31,7 @@ export function resolveWallContact(car, c, nx, ny, pen) {
   const vt = v.x * tx + v.y * ty;
   const rt = c.rx * ty - c.ry * tx;
   let jt = -vt / (1 / m + (rt * rt) / I);
-  jt = Math.max(-WALL_FRICTION * j, Math.min(WALL_FRICTION * j, jt));
+  jt = Math.max(-friction * j, Math.min(friction * j, jt));
   car.applyImpulse(tx * jt, ty * jt, c.rx, c.ry);
   return -vn;
 }
