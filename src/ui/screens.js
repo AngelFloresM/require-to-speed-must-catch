@@ -1,4 +1,5 @@
 // Menús y HUD (DOM simple, sin frameworks).
+import { measurePerformance } from '../data/performance.js';
 
 const $ = (id) => document.getElementById(id);
 const SCREENS = ['menu', 'controls', 'garage', 'pause', 'results'];
@@ -17,10 +18,15 @@ export function formatTime(t) {
 }
 
 export function renderGarage(car) {
+  const perf = measurePerformance(car.physics);
   $('car-name').textContent = car.name;
-  const labels = { topSpeed: 'Velocidad', acceleration: 'Aceleración', handling: 'Manejo' };
-  $('car-stats').innerHTML = Object.entries(labels)
-    .map(([k, label]) => `<div class="stat"><span>${label}</span><div class="bar"><div style="width:${car.stats[k] * 10}%"></div></div></div>`)
+  const rows = [
+    ['Velocidad', 'topSpeed', `${Math.round(perf.topKmh)} km/h`],
+    ['Aceleración', 'acceleration', `0-100 en ${perf.zeroTo100.toFixed(1)} s`],
+    ['Manejo', 'handling', `${perf.lateralG.toFixed(1)} g en curva`],
+  ];
+  $('car-stats').innerHTML = rows
+    .map(([label, k, value]) => `<div class="stat"><span>${label}</span><div class="bar"><div style="width:${perf.bars[k] * 10}%"></div></div><span class="value">${value}</span></div>`)
     .join('');
 }
 
