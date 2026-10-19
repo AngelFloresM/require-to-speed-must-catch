@@ -18,19 +18,10 @@
 
     <section id="controls" class="screen hidden">
       <h2>Controles</h2>
-      <table>
-        <tr><td>Acelerar</td><td>W / ↑ · RT</td></tr>
-        <tr><td>Frenar / reversa</td><td>S / ↓ · LT</td></tr>
-        <tr><td>Girar</td><td>A D / ← → · stick</td></tr>
-        <tr><td>Freno de mano</td><td>Espacio · A</td></tr>
-        <tr><td>Nitro</td><td>Shift · X</td></tr>
-        <tr><td>Subir marcha (manual)</td><td>E · RB</td></tr>
-        <tr><td>Bajar marcha (manual)</td><td>Q · LB</td></tr>
-        <tr><td>Cámara</td><td>C · Back</td></tr>
-        <tr><td>Volver a la pista</td><td>R · Y</td></tr>
-        <tr><td>Pausa</td><td>Esc · Start</td></tr>
-      </table>
-      <button data-go="menu">Volver</button>
+      <div class="controls-wrap"><table id="controls-table"></table></div>
+      <p id="controls-msg"></p>
+      <button id="controls-reset">Restablecer</button>
+      <button id="controls-back">Volver</button>
     </section>
 
     <section id="garage" class="screen hidden">
@@ -66,6 +57,7 @@
       <h2>Pausa</h2>
       <button id="resume">Continuar</button>
       <button id="restart">Reiniciar</button>
+      <button id="pause-controls">Controles</button>
       <button id="quit">Salir al menú</button>
     </section>
 
