@@ -21,15 +21,16 @@ npm run build    # versión optimizada en dist/
 
 ## Publicar (GitHub Pages)
 
-Cada push a `main` corre las pruebas, construye y publica en
+**CD:** cada merge de un PR a `main` (y cualquier push a `main`) corre las pruebas, construye y publica en
 `https://angelfloresm.github.io/require-to-speed-must-catch/`
-(ver `.github/workflows/deploy.yml`).
+(ver `.github/workflows/deploy.yml`). Al terminar, comenta en el PR la liga publicada.
+Si las pruebas fallan, no se publica.
 
 Una sola vez: en GitHub ve a **Settings → Pages → Source** y elige **GitHub Actions**.
 
 ### Deploy manual de cualquier rama
 
-1. **Actions → Deploy to GitHub Pages → Run workflow**, elige la rama y dale **Run**.
+1. **Actions → CD - Deploy to GitHub Pages → Run workflow**, elige la rama y dale **Run**.
 2. La rama y el commit publicados se ven abajo a la izquierda en el menú.
 
 Solo hay un sitio: el deploy manual reemplaza lo publicado hasta el siguiente deploy.
