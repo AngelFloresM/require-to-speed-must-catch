@@ -19,6 +19,14 @@ npm test         # pruebas de física y carrera (sin navegador)
 npm run build    # versión optimizada en dist/
 ```
 
+## Publicar (GitHub Pages)
+
+Cada push a `main` corre las pruebas, construye y publica en
+`https://angelfloresm.github.io/require-to-speed-must-catch/`
+(ver `.github/workflows/deploy.yml`).
+
+Una sola vez: en GitHub ve a **Settings → Pages → Source** y elige **GitHub Actions**.
+
 ## Controles
 
 | Acción | Teclado | Control |
