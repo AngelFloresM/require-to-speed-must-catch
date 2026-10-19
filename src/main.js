@@ -7,7 +7,8 @@ import { CarMesh } from './render/carMesh.js';
 import { Vehicle } from './physics/vehicle.js';
 import { readInput } from './input.js';
 import { initControls, renderControls, leaveControls } from './ui/controls.js';
-import { Hud, showScreen, renderGarage, renderResults } from './ui/screens.js';
+import { Hud, showScreen, renderGarage, renderResults, renderTuning } from './ui/screens.js';
+import { applyTuning, defaultTuning } from './data/tuning.js';
 
 // ---------- Escena ----------
 const canvas = document.getElementById('scene');
@@ -49,6 +50,8 @@ let mode = 'menu'; // menu | racing | paused | results
 let camMode = 0;   // 0 = persecución, 1 = cofre
 let shake = 0;
 let laps = 3;
+// Ajustes de rendimiento (solo vista por ahora: siempre en 0).
+const tuning = defaultTuning();
 let gearbox = 'auto';
 try {
   gearbox = localStorage.getItem('gearbox') === 'manual' ? 'manual' : 'auto';
@@ -63,10 +66,11 @@ const RIVALS = [
 function startRace() {
   for (const m of meshes) scene.remove(m.group);
   const playerCar = CARS[carIndex];
-  const spec = { ...playerCar.physics, color: playerCar.color };
+  const physics = applyTuning(playerCar.physics, tuning);
+  const spec = { ...physics, color: playerCar.color };
   // Los rivales usan el mismo carro que el jugador (carrera pareja).
   const colors = RIVAL_COLORS.filter((c) => c !== playerCar.color);
-  const rivals = RIVALS.map((r, i) => ({ ...r, spec: playerCar.physics, color: colors[i] }));
+  const rivals = RIVALS.map((r, i) => ({ ...r, spec: physics, color: colors[i] }));
   race = new Race(track, spec, { laps, rivals });
   race.onHit = (f) => (shake = Math.min(1, shake + f / 15));
   meshes = race.racers.map((r) => new CarMesh(r.car, r.color, playerCar.model));
@@ -144,6 +148,10 @@ gearboxSelect.addEventListener('change', (e) => {
   } catch {}
 });
 document.getElementById('start').addEventListener('click', startRace);
+document.getElementById('open-tuning').addEventListener('click', () => {
+  renderTuning(CARS[carIndex], tuning);
+  showScreen('tuning');
+});
 document.getElementById('again').addEventListener('click', startRace);
 document.getElementById('restart').addEventListener('click', startRace);
 document.getElementById('back').addEventListener('click', toMenu);
@@ -257,7 +265,7 @@ function frame(now) {
     }
     for (const m of meshes) m.sync(dt);
     updateCamera(dt);
-  } else if (mode === 'menu' && !document.getElementById('garage').classList.contains('hidden')) {
+  } else if (mode === 'menu' && ['garage', 'tuning'].some((id) => !document.getElementById(id).classList.contains('hidden'))) {
     // Garaje: la cámara gira alrededor del carro elegido (a la derecha del panel).
     menuAngle += dt * 0.3;
     const d = 7.5;
