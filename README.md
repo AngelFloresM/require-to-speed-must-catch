@@ -73,8 +73,8 @@ Se pueden cambiar en **Controles** (menú principal o pausa): 2 teclas y 1 entra
 | Girar | A D / ← → | Stick izq. |
 | Freno de mano | Espacio | A |
 | Nitro | Shift | X |
-| Subir marcha (manual) | E | RB |
-| Bajar marcha (manual) | Q | LB |
+| Subir marcha (también en automática) | E | RB |
+| Bajar marcha (también en automática) | Q | LB |
 | Cámara | C | Back |
 | Volver a la pista | R | Y |
 | Pausa | Esc / P | Start |

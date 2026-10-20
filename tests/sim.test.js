@@ -123,6 +123,40 @@ test('caja manual: no cambia sola, sube a mano y no deja pasarse del corte al ba
   assert.ok(car.manualShift(1), 'subir sí se permite');
 });
 
+test('caja automática: el jugador puede bajar y subir a mano; la caja lo respeta un rato', () => {
+  const spec = CARS.find((c) => c.id === 'mustank').physics;
+  const car = new Vehicle(spec);
+  car.input.throttle = 1;
+  while (car.gear < 4) car.update(PHYSICS_DT);
+  for (let i = 0; i < 120; i++) car.update(PHYSICS_DT);
+  // Rebaje para pasar: la automática no vuelve a subir de inmediato.
+  car.input.throttle = 0.3;
+  assert.ok(car.manualShift(-1), 'baja a 3ra');
+  for (let i = 0; i < 120; i++) car.update(PHYSICS_DT);
+  assert.equal(car.gear, 3, 'mantiene la marcha elegida');
+  // Subir a mano a baja velocidad: no la regresa enseguida.
+  assert.ok(car.manualShift(1), 'sube a 4ta');
+  for (let i = 0; i < 120; i++) car.update(PHYSICS_DT);
+  assert.equal(car.gear, 4);
+  // Pasado el rato, la automática vuelve a decidir.
+  car.input.throttle = 0;
+  car.vx *= 0.3;
+  car.vy *= 0.3;
+  for (let i = 0; i < 120 * 5; i++) car.update(PHYSICS_DT);
+  assert.ok(car.gear < 4, `vuelve a bajar sola (marcha ${car.gear})`);
+});
+
+test('caja automática con cambio a mano: en el corte sí sube', () => {
+  const spec = CARS.find((c) => c.id === 'mustank').physics;
+  const car = new Vehicle(spec);
+  car.input.throttle = 1;
+  while (car.gear < 3) car.update(PHYSICS_DT);
+  car.manualShift(-1);
+  for (let i = 0; i < 120 * 2.5; i++) car.update(PHYSICS_DT);
+  assert.ok(car.gear >= 3, 'no se queda pegada en el corte');
+  assert.ok(car.rpm <= spec.redline * 1.02);
+});
+
 test('freno de motor: soltar el acelerador frena más en marcha baja', () => {
   const spec = CARS.find((c) => c.id === 'mustank').physics;
   const decel = (gear) => {

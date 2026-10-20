@@ -84,10 +84,8 @@ export class FreeMode {
   update(dt, input, hud) {
     const car = this.ride.player.car;
     if (input.actions.has('camera')) this.camMode = (this.camMode + 1) % 2;
-    if (!car.automatic) {
-      if (input.actions.has('shiftUp')) car.manualShift(1);
-      if (input.actions.has('shiftDown')) car.manualShift(-1);
-    }
+    if (input.actions.has('shiftUp')) car.manualShift(1);
+    if (input.actions.has('shiftDown')) car.manualShift(-1);
     if (input.actions.has('reset')) this.ride.respawn();
     Object.assign(car.input, input);
 
