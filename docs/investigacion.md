@@ -75,10 +75,28 @@ Nombres inventados, datos basados en fichas públicas. "≈" = aproximado o sin 
 | 0-100 km/h real | ≈11 s (sin dato oficial) | 2.4 s (oficial, Launch Control) | ≈4.0–4.5 s (fuentes difieren) |
 | Vel. máx real | ≈175 km/h | 260 km/h (oficial) | ≈250 km/h limitada |
 
+**Jeppeta Wrangla Rubicon** (ref. Jeep Wrangler Rubicon JL 2 puertas, 3.6 L):
+
+| | Dato |
+|---|---|
+| Motor | 3.6 L V6 Pentastar |
+| Potencia | 285 hp @ 6400 rpm |
+| Torque | 353 Nm (260 lb-ft) @ 4800 rpm |
+| Tracción | 4x4 Rock-Trac (en el juego: 4x4 permanente 50/50) |
+| Caja | Automática 8 vel. (4.71, 3.14, 2.10, 1.67, 1.29, 1.00, 0.84, 0.67), eje 4.10 |
+| Llantas | 33" (radio ≈0.42 m) |
+| Peso | ≈1,950 kg |
+| Medidas | 4.33 × 1.89 × 1.85 m, entre ejes 2.46 m |
+| 0-100 km/h real | ≈7.5–8 s (fuentes difieren); en el juego 7.4 s |
+| Vel. máx real | ≈160 km/h limitada |
+
+En el juego: llantas de lodo con menos agarre (1.1), centro de gravedad alto y mucha resistencia del aire (carrocería cuadrada).
+
 Relaciones de caja, curvas de torque, radio de llanta y coeficientes de arrastre son estimaciones razonables (no hay fichas oficiales para todo).
 En el juego el agarre es más alto que en la vida real (arcade), por eso los 0-100 del juego pueden salir un poco más rápidos.
 
 Fuentes:
 - Nissan March: https://www.mercadolibre.com.mx/blog/mo-march-2024-precio · https://www.autocosmos.com.mx/catalogo/segmentos/nissan/march
 - Porsche Taycan Turbo S: hoja oficial de Porsche https://pnr-prd2-pub2.newsroom.porsche.com/dam/jcr:07390e8a-7387-417f-8df1-467fd36df165/Taycan%20Turbo%20S%20spec%20sheet.pdf
+- Jeep Wrangler Rubicon JL: ficha de Jeep / Stellantis (3.6 L Pentastar, caja 850RE, eje 4.10 Rubicon)
 - Ford Mustang GT S650: https://www.cjponyparts.com/resources/news/s650-mustang · https://www.musclecarsandtrucks.com/s650-ford-mustang-horsepower-numbers-are-now-official/
