@@ -5,19 +5,28 @@ import { nearestRoad } from './city/city.js';
 import { Traffic } from './city/traffic.js';
 import { collideCars } from './physics/collision.js';
 
-// Cuerpo de un carro de tráfico para el choque con el jugador (pesado, sin giro).
+// Cuerpo de un carro de tráfico para el choque con el jugador: un carro
+// normal (masa y giro reales), así que el golpe lo mueve.
+const TRAFFIC_SPEC = { length: 4.5, width: 1.85, mass: 1300, inertia: 2000 };
+const TRAFFIC_RESTITUTION = 0.25; // rebote contra carros de tráfico
+
 class TrafficBody {
   constructor(c) {
     this.c = c;
-    this.spec = { length: 4.5, width: 1.85, mass: 4000, inertia: 1e9 };
+    this.spec = TRAFFIC_SPEC;
     this.x = c.x;
     this.y = c.y;
     this.heading = c.h;
-    this.vx = Math.cos(c.h) * c.speed;
-    this.vy = Math.sin(c.h) * c.speed;
-    this.yawRate = 0;
+    const k = c.knock;
+    this.vx = Math.cos(c.h) * c.speed + (k ? k.vx : 0);
+    this.vy = Math.sin(c.h) * c.speed + (k ? k.vy : 0);
+    this.yawRate = k ? k.w : 0;
   }
-  applyImpulse() {}
+  applyImpulse(jx, jy, rx, ry) {
+    this.vx += jx / this.spec.mass;
+    this.vy += jy / this.spec.mass;
+    this.yawRate += (rx * jy - ry * jx) / this.spec.inertia;
+  }
 }
 
 export class FreeRide {
@@ -42,10 +51,10 @@ export class FreeRide {
       for (const c of t.cars) {
         if (Math.abs(c.x - car.x) > 6 || Math.abs(c.y - car.y) > 6) continue;
         const body = new TrafficBody(c);
-        const h = collideCars(car, body);
+        const h = collideCars(car, body, { restitution: TRAFFIC_RESTITUTION });
         if (h > 0) {
           hit = Math.max(hit, h);
-          c.stun = 2.5; // el otro conductor se detiene un momento
+          t.push(c, body);
         }
       }
     }

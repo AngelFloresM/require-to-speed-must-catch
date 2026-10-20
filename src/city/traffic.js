@@ -4,11 +4,17 @@
 // - Guardan distancia (modelo IDM) con quien vaya adelante, incluido el jugador.
 // - Se detienen en rojo (y en amarillo si alcanzan a frenar).
 // - En cruces sin semáforo, esperan si el cruce está ocupado.
-// Movimiento cinemático (sin física) salvo cuando el jugador los choca.
+// Movimiento cinemático (sin física) salvo cuando el jugador los choca:
+// el golpe los desplaza y los hace girar; se detienen un momento y luego
+// regresan poco a poco a su carril.
 import { lightFor } from './signals.js';
+import { drivableGap } from './city.js';
 
 const IDM = { a: 2.0, b: 3.0, s0: 2.5, T: 1.2 };
 const LOOK = 40; // m que miran hacia adelante
+const KNOCK_DECEL = 7; // m/s² de frenado al ser empujado (llantas arrastrando)
+const KNOCK_SPIN_DAMP = 3; // 1/s, se apaga el giro
+const RETURN_RATE = 0.8; // 1/s, qué tan rápido regresa a su carril
 
 const allowed = (edge, dir) => edge.road.oneway === 0 || edge.road.oneway === dir;
 const laneOffset = (edge) => (edge.road.oneway === 0 ? edge.road.width / 4 : 0);
@@ -69,7 +75,7 @@ export class Traffic {
       const p = lanePoint(edge, dir, s);
       if (avoid && Math.hypot(p.x - avoid.x, p.y - avoid.y) < 80) continue;
       if (this.cars.some((o) => o !== c && Math.hypot(o.x - p.x, o.y - p.y) < 12)) continue;
-      Object.assign(c, { edge, dir, s, turn: null, speed: 4, x: p.x, y: p.y, h: p.h, stun: 0 });
+      Object.assign(c, { edge, dir, s, turn: null, speed: 4, x: p.x, y: p.y, h: p.h, stun: 0, knock: null, dev: null, base: null });
       return;
     }
   }
@@ -144,26 +150,88 @@ export class Traffic {
     return others.some((o) => o !== c && o.turn?.node === node && Math.hypot(o.x - node.x, o.y - node.y) < r + 2);
   }
 
+  // Golpe del jugador: body es el cuerpo físico tras el choque (posición,
+  // velocidad y giro). El carro queda fuera de su carril por la diferencia.
+  push(c, body) {
+    const b = c.base ?? { x: c.x, y: c.y, h: c.h };
+    c.dev = { x: body.x - b.x, y: body.y - b.y, h: body.heading - b.h };
+    c.x = body.x;
+    c.y = body.y;
+    c.knock = { vx: body.vx, vy: body.vy, w: body.yawRate };
+    c.speed = 0;
+    c.stun = 2.5; // el otro conductor se detiene un momento
+  }
+
+  // Movimiento libre tras un golpe: se desliza frenando y choca con la banqueta.
+  slide(c, dt) {
+    const k = c.knock;
+    const v = Math.hypot(k.vx, k.vy);
+    const nv = Math.max(0, v - KNOCK_DECEL * dt);
+    k.vx *= v > 0 ? nv / v : 0;
+    k.vy *= v > 0 ? nv / v : 0;
+    k.w *= Math.exp(-KNOCK_SPIN_DAMP * dt);
+    c.dev.x += k.vx * dt;
+    c.dev.y += k.vy * dt;
+    c.dev.h += k.w * dt;
+    const x = c.base.x + c.dev.x;
+    const y = c.base.y + c.dev.y;
+    const g = drivableGap(this.city, x, y);
+    // Centro a más de ~1 m de la orilla: lo regresa y frena lo que iba hacia afuera.
+    if (g && g.gap > -1) {
+      const pen = g.gap + 1;
+      c.dev.x += g.nx * pen;
+      c.dev.y += g.ny * pen;
+      const vn = k.vx * g.nx + k.vy * g.ny;
+      if (vn < 0) {
+        k.vx -= vn * g.nx * 1.2;
+        k.vy -= vn * g.ny * 1.2;
+      }
+    }
+    if (nv < 0.2 && Math.abs(k.w) < 0.05) c.knock = null;
+    else c.stun = Math.max(c.stun, 0.5);
+  }
+
   // others: carros de tráfico + jugador ({x, y, vx, vy, h}).
   step(dt, player = null) {
     this.time += dt;
     const all = player ? [...this.cars, player] : this.cars;
     for (const c of this.cars) {
-      if (c.stun > 0) {
-        c.stun -= dt;
-        c.speed = 0;
-        continue;
+      // Trabaja sobre la pose del carril; al final suma la desviación del golpe.
+      if (c.base) Object.assign(c, { x: c.base.x, y: c.base.y, h: c.base.h });
+      this.drive(c, dt, all);
+      c.base = { x: c.x, y: c.y, h: c.h };
+      if (!c.dev) continue;
+      if (c.knock) this.slide(c, dt);
+      else if (c.speed > 1) {
+        const k = Math.exp(-RETURN_RATE * dt);
+        c.dev.x *= k;
+        c.dev.y *= k;
+        c.dev.h = Math.atan2(Math.sin(c.dev.h), Math.cos(c.dev.h)) * k * k;
+        if (Math.hypot(c.dev.x, c.dev.y) < 0.05 && Math.abs(c.dev.h) < 0.01) c.dev = null;
       }
-      const v0 = c.turn ? 6 : c.edge.road.major ? 13.9 : 8.3; // 50 / 30 km/h, 22 km/h al dar vuelta
-      const { gap, vLead } = this.leader(c, all);
-      const dv = c.speed - vLead;
-      const sStar = IDM.s0 + Math.max(0, c.speed * IDM.T + (c.speed * dv) / (2 * Math.sqrt(IDM.a * IDM.b)));
-      let acc = IDM.a * (1 - (c.speed / v0) ** 4 - (sStar / Math.max(gap, 0.1)) ** 2);
-      acc = Math.max(-9, Math.min(IDM.a, acc));
-      c.speed = Math.max(0, c.speed + acc * dt);
-      if (gap < 0.3) c.speed = Math.min(c.speed, 0.5);
-      this.advance(c, c.speed * dt);
+      if (c.dev) {
+        c.x += c.dev.x;
+        c.y += c.dev.y;
+        c.h += c.dev.h;
+      }
     }
+  }
+
+  drive(c, dt, all) {
+    if (c.stun > 0) {
+      c.stun -= dt;
+      c.speed = 0;
+      return;
+    }
+    const v0 = c.turn ? 6 : c.edge.road.major ? 13.9 : 8.3; // 50 / 30 km/h, 22 km/h al dar vuelta
+    const { gap, vLead } = this.leader(c, all);
+    const dv = c.speed - vLead;
+    const sStar = IDM.s0 + Math.max(0, c.speed * IDM.T + (c.speed * dv) / (2 * Math.sqrt(IDM.a * IDM.b)));
+    let acc = IDM.a * (1 - (c.speed / v0) ** 4 - (sStar / Math.max(gap, 0.1)) ** 2);
+    acc = Math.max(-9, Math.min(IDM.a, acc));
+    c.speed = Math.max(0, c.speed + acc * dt);
+    if (gap < 0.3) c.speed = Math.min(c.speed, 0.5);
+    this.advance(c, c.speed * dt);
   }
 
   advance(c, ds) {

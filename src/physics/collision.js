@@ -72,7 +72,7 @@ function circles(car) {
   ];
 }
 
-export function collideCars(a, b) {
+export function collideCars(a, b, { restitution = CAR_RESTITUTION } = {}) {
   // Descarte rápido por distancia.
   const reach = (a.spec.length + b.spec.length) / 2 + 0.5;
   if (Math.abs(a.x - b.x) > reach || Math.abs(a.y - b.y) > reach) return 0;
@@ -110,7 +110,7 @@ export function collideCars(a, b) {
       hit = Math.max(hit, -vn);
       const rna = rax * ny - ray * nx;
       const rnb = rbx * ny - rby * nx;
-      const j = (-(1 + CAR_RESTITUTION) * vn) /
+      const j = (-(1 + restitution) * vn) /
         (1 / ma + 1 / mb + (rna * rna) / a.spec.inertia + (rnb * rnb) / b.spec.inertia);
       a.applyImpulse(-nx * j, -ny * j, rax, ray);
       b.applyImpulse(nx * j, ny * j, rbx, rby);
