@@ -85,9 +85,10 @@ test('el tráfico frena detrás del jugador detenido', () => {
   assert.ok(min > 4.6, `se acercó a ${min.toFixed(1)} m`);
 });
 
-test('modo libre con tráfico: chocar a un carro lo detiene', async () => {
+test('modo libre con tráfico: chocar a un carro lo empuja, lo detiene y luego vuelve a su carril', async () => {
   const { FreeRide } = await import('../src/freeRide.js');
   const { CARS } = await import('../src/data/cars.js');
+  const { drivableGap } = await import('../src/city/city.js');
   const ride = new FreeRide(city, CARS[0].physics, { traffic: 1 });
   const c = ride.traffic.cars[0];
   const car = ride.player.car;
@@ -95,13 +96,44 @@ test('modo libre con tráfico: chocar a un carro lo detiene', async () => {
   car.place(c.x - Math.cos(c.h) * 8, c.y - Math.sin(c.h) * 8, c.h);
   car.vx = Math.cos(c.h) * 15;
   car.vy = Math.sin(c.h) * 15;
+  const playerSpeed0 = 15;
   let stunned = false;
+  let maxDev = 0;
   for (let i = 0; i < 120; i++) {
     ride.step(1 / 120);
     if (c.stun > 0) stunned = true;
+    if (c.dev) maxDev = Math.max(maxDev, Math.hypot(c.dev.x, c.dev.y));
   }
   assert.ok(stunned, 'el carro chocado se detiene');
+  assert.ok(maxDev > 1, `el golpe lo mueve (${maxDev.toFixed(1)} m)`);
+  assert.ok(car.speed < playerSpeed0 * 0.8, 'el jugador pierde velocidad al empujarlo');
   assert.equal(ride.message, undefined, 'en modo libre no hay avisos de reglas');
+  // Lejos del jugador, regresa a su carril y sigue manejando, sin salirse de la calle.
+  car.place(c.x + 300, c.y + 300, 0);
+  car.vx = car.vy = 0;
+  for (let i = 0; i < 120 * 15; i++) {
+    ride.step(1 / 120);
+    const g = drivableGap(city, c.x, c.y);
+    assert.ok(g && g.gap < 0, 'el carro de tráfico queda en la calle');
+  }
+  assert.equal(c.dev, null, 'volvió a su carril');
+  assert.ok(c.speed > 1, 'sigue manejando');
+});
+
+test('el rebote contra el tráfico es bajo', async () => {
+  const { FreeRide } = await import('../src/freeRide.js');
+  const { CARS } = await import('../src/data/cars.js');
+  const ride = new FreeRide(city, CARS[0].physics, { traffic: 1 });
+  const c = ride.traffic.cars[0];
+  const car = ride.player.car;
+  c.stun = 10; // quieto
+  car.place(c.x - Math.cos(c.h) * 6, c.y - Math.sin(c.h) * 6, c.h);
+  car.vx = Math.cos(c.h) * 10;
+  car.vy = Math.sin(c.h) * 10;
+  for (let i = 0; i < 60; i++) ride.step(1 / 120);
+  const vRel = car.vx * Math.cos(c.h) + car.vy * Math.sin(c.h) - (c.knock ? c.knock.vx * Math.cos(c.h) + c.knock.vy * Math.sin(c.h) : 0);
+  // Con rebote 0.25 la velocidad de separación es ~25% de la de choque.
+  assert.ok(vRel > -10 * 0.35, `separación ${vRel.toFixed(2)} m/s`);
 });
 
 test('los postes de semáforo quedan sobre la banqueta', async () => {
