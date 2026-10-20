@@ -16,6 +16,8 @@ import { FreeMode } from './freeMode.js';
 import { BigMap } from './ui/bigMap.js';
 import { Hud, showScreen, renderGarage, renderResults, renderTuning } from './ui/screens.js';
 import { applyTuning, defaultTuning } from './data/tuning.js';
+import { applyOverrides } from './data/physicsTuning.js';
+import { TuningPanel, loadOverrides } from './ui/tuningPanel.js';
 
 // ---------- Escena ----------
 const canvas = document.getElementById('scene');
@@ -88,6 +90,9 @@ let shake = 0;
 let laps = 3;
 // Ajustes de rendimiento (solo vista por ahora: siempre en 0).
 const tuning = defaultTuning();
+// Tuneo de física (panel en vivo): valores por carro sobre los de fábrica.
+const physOverrides = loadOverrides();
+const playerSpec = (def) => applyTuning(applyOverrides(def.physics, physOverrides[def.id]), tuning);
 let gearbox = 'auto';
 try {
   gearbox = localStorage.getItem('gearbox') === 'manual' ? 'manual' : 'auto';
@@ -99,7 +104,7 @@ let raceMap = null; // minimapa de la carrera
 function startRace() {
   for (const m of meshes) scene.remove(m.group);
   const playerCar = CARS[carIndex];
-  const physics = applyTuning(playerCar.physics, tuning);
+  const physics = playerSpec(playerCar);
   const spec = { ...physics, color: playerCar.color };
   // Cada rival maneja un carro distinto al del jugador.
   // Iguala el rendimiento de los rivales al tuyo para que la carrera sea pareja.
@@ -119,6 +124,7 @@ function startRace() {
 }
 
 function toMenu() {
+  if (tunePanel.isOpen) tunePanel.close();
   freeMode.stop();
   document.getElementById('hud').classList.remove('free');
   if (preview) scene.add(preview.group);
@@ -148,6 +154,30 @@ document.getElementById('controls-back').addEventListener('click', () => {
   showScreen(controlsReturn);
 });
 document.getElementById('pause-controls').addEventListener('click', () => openControls('pause'));
+
+// Panel de tuneo de física: en carrera o modo libre el juego sigue corriendo.
+const activeVehicle = () => {
+  if (freeMode.active) return freeMode.ride.player.car;
+  return mode === 'menu' ? null : race?.player.car ?? null;
+};
+const tunePanel = new TuningPanel(document.getElementById('tune-panel'), physOverrides, {
+  onChange: (def) => {
+    const v = activeVehicle();
+    if (v) {
+      v.spec = { ...playerSpec(def), color: v.spec.color };
+      v._top = undefined; // recalcula la velocidad máxima
+    }
+    renderGarage(CARS[carIndex], playerSpec(CARS[carIndex]));
+  },
+});
+function toggleTunePanel() {
+  tunePanel.toggle(CARS[carIndex], activeVehicle());
+}
+document.getElementById('pause-tune').addEventListener('click', () => {
+  document.getElementById('resume').click();
+  tunePanel.open(CARS[carIndex], activeVehicle());
+});
+document.getElementById('open-physics').addEventListener('click', () => tunePanel.open(CARS[carIndex], null));
 
 // Menús con el control: B regresa a la pantalla anterior.
 const BACK = {
@@ -180,7 +210,7 @@ trackSelect.innerHTML = TRACKS.map((t, i) => `<option value="${i}">${t.name}</op
 trackSelect.addEventListener('change', (e) => loadTrack(Number(e.target.value)));
 loadTrack(0);
 
-renderGarage(CARS[carIndex]);
+renderGarage(CARS[carIndex], playerSpec(CARS[carIndex]));
 showPreview();
 function showRivals() {
   const names = pickRivals(CARS[carIndex].id).map((r) => r.name);
@@ -189,9 +219,10 @@ function showRivals() {
 showRivals();
 function pickCar(dir) {
   carIndex = (carIndex + dir + CARS.length) % CARS.length;
-  renderGarage(CARS[carIndex]);
+  renderGarage(CARS[carIndex], playerSpec(CARS[carIndex]));
   showRivals();
   showPreview();
+  if (tunePanel.isOpen) tunePanel.open(CARS[carIndex], null);
 }
 document.getElementById('car-prev').addEventListener('click', () => pickCar(-1));
 document.getElementById('car-next').addEventListener('click', () => pickCar(1));
@@ -252,7 +283,7 @@ document.getElementById('open-map').addEventListener('click', openMap);
 
 function startFree() {
   const car = CARS[carIndex];
-  const spec = applyTuning(car.physics, tuning);
+  const spec = playerSpec(car);
   freeMode.start({ car, spec, automatic: gearbox === 'auto' });
   mode = 'free';
   showScreen(null);
@@ -330,6 +361,8 @@ function frame(now) {
       showScreen(mode === 'paused' ? 'pause' : null);
     }
   }
+
+  if (input.actions.has('tune') && (mode === 'racing' || mode === 'free')) toggleTunePanel();
 
   if (mode === 'racing') {
     const p = race.player;

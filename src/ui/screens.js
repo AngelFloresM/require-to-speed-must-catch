@@ -18,8 +18,9 @@ export function formatTime(t) {
   return `${m}:${s.toFixed(2).padStart(5, '0')}`;
 }
 
-export function renderGarage(car) {
-  const perf = measurePerformance(car.physics);
+// physics: la física con la que se va a correr (con tuneo); por defecto la de fábrica.
+export function renderGarage(car, physics = car.physics) {
+  const perf = measurePerformance(physics);
   $('car-name').textContent = car.name;
   $('car-type').textContent = car.info.tipo;
   const labels = { motor: 'Motor', potencia: 'Potencia', torque: 'Torque', traccion: 'Tracción', caja: 'Caja', peso: 'Peso', frenos: 'Frenos' };

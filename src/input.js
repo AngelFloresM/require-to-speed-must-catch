@@ -3,7 +3,7 @@
 import { ACTIONS, parseBindings, padValue } from './bindings.js';
 
 const STORAGE_KEY = 'bindings';
-const PRESS_ACTIONS = ['shiftUp', 'shiftDown', 'camera', 'reset', 'pause', 'map'];
+const PRESS_ACTIONS = ['shiftUp', 'shiftDown', 'camera', 'reset', 'pause', 'map', 'tune'];
 
 let bindings = load();
 const keys = new Set();

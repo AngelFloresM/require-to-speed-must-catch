@@ -80,12 +80,20 @@ Se pueden cambiar en **Controles** (menú principal o pausa): 2 teclas y 1 entra
 | Cámara | C | Back |
 | Volver a la pista | R | Y |
 | Pausa | Esc / P | Start |
+| Mapa (modo libre) | M | Cruceta ↑ |
+| Tuneo de física | T | Cruceta ↓ |
+
+**Tuneo de física** (T, desde la pausa o desde el garaje): panel con barras para cambiar en vivo
+los valores del carro (motor, agarre, derrape, volante, frenos, aerodinámica, peso, nitro,
+reversa). Se guarda por carro en el navegador; ↺ regresa un valor al de fábrica y
+"Copiar valores" copia los cambios en JSON. Los rivales se igualan a tu carro al empezar cada carrera.
 
 ## Estructura
 
 ```
 src/
   data/cars.js          datos de los carros (agregar carros aquí)
+  data/physicsTuning.js valores del panel de tuneo de física (rangos y aplicación)
   track.js              geometría del óvalo (punto ↔ distancia en pista)
   physics/vehicle.js    física arcade del carro
   physics/collision.js  choques carro-muro y carro-carro
