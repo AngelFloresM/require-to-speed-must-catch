@@ -35,6 +35,14 @@ export const STYLES = {
     plan: [[-0.5, 0.9], [-0.45, 0.98], [0.35, 1], [0.47, 0.95], [0.5, 0.85]],
     head: 'slim', tail: 'tribar', spoiler: false,
   },
+  // Todoterreno cuadrado (Jeppeta Wrangla): cofre plano, parabrisas casi
+  // vertical, techo plano, salpicaderas, llanta de refacción atrás.
+  jeep: {
+    body: [[-0.5, 0.6], [-0.48, 0.63], [0.2, 0.63], [0.32, 0.62], [0.47, 0.6], [0.5, 0.5]],
+    cabin: [[-0.47, 0.63], [-0.46, 1.0], [0.08, 1.0], [0.16, 0.64]],
+    plan: [[-0.5, 0.86], [-0.48, 0.9], [0.47, 0.9], [0.5, 0.84]],
+    head: 'jeep', tail: 'square', clearance: 0.3, roundness: 10, flares: true, spare: true,
+  },
 };
 
 const STATIONS = 28; // secciones a lo largo del carro
@@ -138,7 +146,7 @@ function shellSections(spec, style) {
   const L = spec.length;
   const W = spec.width;
   const H = spec.height ?? 1.3;
-  const clearance = 0.16;
+  const clearance = style.clearance ?? 0.16;
   const body = [];
   for (let i = 0; i <= STATIONS; i++) {
     const x = -0.5 + i / STATIONS;
@@ -173,8 +181,9 @@ function shellSections(spec, style) {
 // Geometrías sueltas de carrocería y cabina, para dibujar muchos carros con
 // mallas instanciadas (tráfico).
 export function carShellGeometries(spec, styleId) {
-  const { body, cabin } = shellSections(spec, STYLES[styleId] ?? STYLES.sports);
-  return { body: loft(body, 5), cabin: loft(cabin, 3) };
+  const style = STYLES[styleId] ?? STYLES.sports;
+  const { body, cabin } = shellSections(spec, style);
+  return { body: loft(body, style.roundness ?? 5), cabin: loft(cabin, style.roundness ? 6 : 3) };
 }
 
 // Construye el modelo. Devuelve { group, wheels, tailMat }.
@@ -183,18 +192,18 @@ export function buildCarModel(spec, styleId, color) {
   const L = spec.length;
   const W = spec.width;
   const H = spec.height ?? 1.3;
-  const clearance = 0.16;
+  const clearance = style.clearance ?? 0.16;
   const group = new THREE.Group();
   const paint = new THREE.MeshPhongMaterial({ color, shininess: 70, specular: 0x555555 });
 
   const { body, cabin } = shellSections(spec, style);
-  const bodyMesh = new THREE.Mesh(loft(body, 5), paint);
+  const bodyMesh = new THREE.Mesh(loft(body, style.roundness ?? 5), paint);
   bodyMesh.castShadow = true;
   group.add(bodyMesh);
 
   // Cabina (vidrios)
   const cx1 = style.cabin[style.cabin.length - 1][0];
-  const cabinMesh = new THREE.Mesh(loft(cabin, 3), MATS.glass);
+  const cabinMesh = new THREE.Mesh(loft(cabin, style.roundness ? 6 : 3), MATS.glass);
   cabinMesh.castShadow = true;
   group.add(cabinMesh);
 
@@ -202,7 +211,8 @@ export function buildCarModel(spec, styleId, color) {
   const roof = cabin
     .filter((s) => s.top > H * 0.9)
     .map((s) => ({ ...s, bottom: s.top - 0.03, top: s.top + 0.012, wBottom: s.wTop * 0.9, wTop: s.wTop * 0.85 }));
-  if (roof.length > 2) group.add(new THREE.Mesh(loft(roof, 6), paint));
+  // Todoterreno: techo rígido negro y postes del parabrisas.
+  if (roof.length > 2) group.add(new THREE.Mesh(loft(roof, 6), style.flares ? MATS.trim : paint));
 
   // Ruedas y arcos
   const r = spec.wheelRadius ?? 0.33;
@@ -220,23 +230,60 @@ export function buildCarModel(spec, styleId, color) {
     group.add(pivot);
     wheels.push({ pivot, mesh: w, front });
 
-    const arch = new THREE.Mesh(new THREE.TorusGeometry(r + 0.06, 0.05, 6, 18, Math.PI), MATS.dark);
-    arch.position.set(x, r, Math.sign(z) * ((sample(style.plan, x / L) * W) / 2) * 0.96);
-    group.add(arch);
+    const sideZ = Math.sign(z) * ((sample(style.plan, x / L) * W) / 2) * 0.96;
+    if (style.flares) {
+      // Salpicadera negra plana sobre la llanta.
+      const flare = new THREE.Mesh(new THREE.BoxGeometry(r * 2.5, 0.07, (W / 2 - Math.abs(sideZ)) + 0.12), MATS.trim);
+      flare.position.set(x, r * 2 + 0.06, Math.sign(z) * (Math.abs(sideZ) + (W / 2 - Math.abs(sideZ)) / 2));
+      group.add(flare);
+      for (const dx of [-1, 1]) {
+        const lip = new THREE.Mesh(new THREE.BoxGeometry(0.07, r * 0.9, (W / 2 - Math.abs(sideZ)) + 0.12), MATS.trim);
+        lip.position.set(x + dx * r * 1.22, r * 1.6, flare.position.z);
+        lip.rotation.z = -dx * 0.5;
+        group.add(lip);
+      }
+    } else {
+      const arch = new THREE.Mesh(new THREE.TorusGeometry(r + 0.06, 0.05, 6, 18, Math.PI), MATS.dark);
+      arch.position.set(x, r, sideZ);
+      group.add(arch);
+    }
   }
 
   // Parrilla
   const noseTop = sample(style.body, 0.5) * H;
-  const grille = new THREE.Mesh(new THREE.BoxGeometry(0.04, Math.max(0.08, (noseTop - clearance) * 0.45), W * 0.42), MATS.trim);
-  grille.position.set(L / 2 + 0.005, clearance + 0.12, 0);
-  group.add(grille);
+  if (style.head === 'jeep') {
+    // Siete ranuras verticales y defensa de acero.
+    const slotH = (noseTop - clearance) * 0.45;
+    for (let k = -3; k <= 3; k++) {
+      const slot = new THREE.Mesh(new THREE.BoxGeometry(0.03, slotH, 0.07), MATS.dark);
+      slot.position.set(L / 2 + 0.005, clearance + 0.2 + slotH / 2, k * 0.115);
+      group.add(slot);
+    }
+    const bumper = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.18, W * 0.98), MATS.trim);
+    bumper.position.set(L / 2 + 0.04, clearance + 0.05, 0);
+    group.add(bumper);
+  } else {
+    const grille = new THREE.Mesh(new THREE.BoxGeometry(0.04, Math.max(0.08, (noseTop - clearance) * 0.45), W * 0.42), MATS.trim);
+    grille.position.set(L / 2 + 0.005, clearance + 0.12, 0);
+    group.add(grille);
+  }
 
   // Faros
   const frontX = L * 0.485;
   const headY = Math.max(clearance + 0.15, sample(style.body, 0.47) * H - 0.1);
   const headZ = W * 0.33;
   for (const s of [1, -1]) {
-    if (style.head === 'round') {
+    if (style.head === 'jeep') {
+      // Faros redondos grandes a los lados de la parrilla.
+      const h = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.11, 0.04, 18), MATS.head);
+      h.rotation.z = Math.PI / 2;
+      h.position.set(L / 2 + 0.01, clearance + 0.2 + (noseTop - clearance) * 0.27, s * 0.56);
+      group.add(h);
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(0.115, 0.02, 6, 18), MATS.trim);
+      ring.rotation.y = Math.PI / 2;
+      ring.position.copy(h.position);
+      group.add(ring);
+    } else if (style.head === 'round') {
       const h = new THREE.Mesh(new THREE.SphereGeometry(0.12, 12, 8), MATS.head);
       h.scale.set(0.5, 0.8, 1.2);
       h.position.set(frontX, headY, s * headZ);
@@ -270,6 +317,10 @@ export function buildCarModel(spec, styleId, color) {
         t.position.set(backX, tailY, s * (W * 0.3 + k * 0.08));
         group.add(t);
       }
+    } else if (style.tail === 'square') {
+      const t = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.22, 0.1), tailMat);
+      t.position.set(backX, tailY - 0.05, s * W * 0.44);
+      group.add(t);
     } else if (style.tail === 'tall') {
       const t = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.3, 0.12), tailMat);
       t.position.set(backX + 0.05, tailY + 0.1, s * W * 0.4);
@@ -307,6 +358,17 @@ export function buildCarModel(spec, styleId, color) {
       post.position.set(-L / 2 + 0.22, deckY + 0.1, s * W * 0.3);
       group.add(post);
     }
+  }
+
+  // Llanta de refacción en la puerta trasera, y defensa trasera.
+  if (style.spare) {
+    const spare = wheel(r * 0.95, tw);
+    spare.rotation.y = Math.PI / 2;
+    spare.position.set(-L / 2 - tw / 2 - 0.02, sample(style.body, -0.5) * H * 0.82, 0);
+    group.add(spare);
+    const bumper = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.16, W * 0.96), MATS.trim);
+    bumper.position.set(-L / 2 - 0.03, clearance + 0.05, 0);
+    group.add(bumper);
   }
 
   // Escapes

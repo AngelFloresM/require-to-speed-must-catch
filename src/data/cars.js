@@ -150,5 +150,37 @@ export const CARS = [
       brakeForce: 23000, brakeBias: 0.65,
     }),
   },
+  {
+    id: 'jeppeta',
+    model: 'jeep',
+    name: 'Jeppeta Wrangla Rubicon',
+    color: 0x3f6b3a,
+    info: {
+      tipo: 'Todoterreno 2 puertas (ref. Jeep Wrangler Rubicon JL)',
+      motor: '3.6 L V6 Pentastar',
+      potencia: '285 hp @ 6400 rpm',
+      torque: '353 Nm @ 4800 rpm',
+      traccion: '4x4 (Rock-Trac)',
+      caja: 'Automática 8 vel.',
+      peso: '~1,950 kg',
+      frenos: 'Discos ventilados adelante / sólidos atrás',
+    },
+    physics: car({
+      mass: 1950, inertia: 2900,
+      length: 4.334, width: 1.894, height: 1.848,
+      cgToFront: 1.18, cgToRear: 1.28, // ~52% adelante, distancia entre ejes 2.46 m
+      drivetrain: 'AWD', awdFront: 0.5,
+      idleRpm: 700, launchRpm: 2000, redline: 6600,
+      torqueCurve: [[1000, 250], [2000, 300], [3000, 325], [4000, 342], [4800, 353], [5600, 340], [6400, 315], [6600, 300]],
+      gears: [4.71, 3.14, 2.1, 1.67, 1.29, 1.0, 0.84, 0.67], finalDrive: 4.1, wheelRadius: 0.42, // llantas de 33"
+      dragCoef: 0.84, downforce: 0, grip: 1.1, // caja cuadrada y llantas de lodo
+      speedLimiter: 160 / 3.6,
+      brakeForce: 15500, brakeBias: 0.66,
+      cgHeight: 0.78,
+      maxSteer: 0.6, minSteer: 0.1, steerSpeed: 2.8,
+      shiftTime: 0.25,
+      drivetrainEfficiency: 0.78, // pérdidas de la caja de transferencia 4x4
+    }),
+  },
 ];
 

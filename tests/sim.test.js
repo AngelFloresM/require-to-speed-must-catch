@@ -4,6 +4,7 @@ import { OvalTrack } from '../src/track.js';
 import { Race, PHYSICS_DT } from '../src/race.js';
 import { Vehicle } from '../src/physics/vehicle.js';
 import { CARS } from '../src/data/cars.js';
+import { engineRpm } from '../src/physics/engine.js';
 
 const spec = CARS[0].physics;
 
@@ -99,7 +100,13 @@ test('caja automática: sube de marcha y respeta el corte', () => {
       maxGear = Math.max(maxGear, car.gear);
       assert.ok(car.rpm <= c.physics.redline * 1.02, `${c.name} rpm ${car.rpm}`);
     }
-    assert.ok(maxGear >= c.physics.gears.length - 1, `${c.name} llegó a ${maxGear}`);
+    // Con limitador puede no necesitar las últimas marchas: basta con la que lo alcanza.
+    let need = c.physics.gears.length - 1;
+    if (c.physics.speedLimiter) {
+      need = 1;
+      while (need < c.physics.gears.length && engineRpm(c.physics, need, c.physics.speedLimiter) > c.physics.redline * c.physics.upshiftAt) need++;
+    }
+    assert.ok(maxGear >= need, `${c.name} llegó a ${maxGear} (necesita ${need})`);
   }
 });
 
