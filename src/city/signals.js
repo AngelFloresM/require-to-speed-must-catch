@@ -1,4 +1,5 @@
-// Semáforos: en los cruces donde llega una avenida (3 o más calles).
+// Semáforos: en los cruces marcados en OpenStreetMap (o, si no hay datos,
+// donde llega una avenida a un cruce de 3 o más calles).
 // Dos grupos de accesos (los dos ejes del cruce) que se turnan.
 
 export const CYCLE = { green: 12, yellow: 3, allRed: 1.5 };
@@ -14,8 +15,10 @@ export function approachHeading(edge, node) {
 export function buildSignals(city, seed = 1) {
   let s = seed;
   const rand = () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296);
+  const marked = city.nodes.some((n) => n.osmSignal);
   for (const node of city.nodes) {
-    if (node.edges.length < 3 || !node.edges.some((e) => e.road.major)) continue;
+    if (node.edges.length < 3) continue;
+    if (marked ? !node.osmSignal : !node.edges.some((e) => e.road.major)) continue;
     const ref = approachHeading(node.edges[0], node);
     const group = new Map(); // edgeId -> 0 | 1
     for (const e of node.edges) {

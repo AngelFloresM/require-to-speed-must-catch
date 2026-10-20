@@ -12,20 +12,22 @@ Juego de carreras para navegador inspirado en *Need for Speed: Most Wanted (2005
 
 ## Modo libre · Tepic
 
-Menú → **Modo libre · Tepic** → elige carro → **Manejar**. Es una parte del centro de Tepic, Nayarit
-(Catedral, Plaza Principal, Alameda, Parque Juan Escutia, Parque La Loma, río Mololoa, Av. México,
-Av. Ignacio Allende, Libramiento a Mazatlán, Av. Paseo de la Loma, Av. Jacarandas).
+Menú → **Modo libre · Tepic** → elige carro → **Manejar**. Es el centro de Tepic, Nayarit
+(~2.8 × 2.4 km alrededor de la Catedral), con datos reales de **OpenStreetMap**.
 
-- Calles trazadas a mano sobre una captura de Google Maps: posiciones y nombres aproximados.
-  Los datos están en `src/data/tepic.js`, para corregirlos fácilmente.
-- Avenidas de doble sentido (línea amarilla); calles de un sentido alternado (flechas blancas).
-  **Suposición**: falta confirmar el sentido real de cada calle.
+- Calles con su forma, nombre y **sentido real**; ancho según el tipo de calle y sus carriles.
+  Doble sentido: línea amarilla; un sentido: flechas blancas.
+- Semáforos donde OSM los marca; parques, plazas, río Mololoa y edificios con su planta real
+  (el resto de los lotes se llena con casas).
+- Fuente: `data/tepic.osm.gz` (exportado de openstreetmap.org). Para regenerar el mapa:
+  `node scripts/osm2tepic.mjs` → `src/data/tepicMap.js`.
+- Datos © OpenStreetMap contributors, licencia ODbL (https://www.openstreetmap.org/copyright).
 - Solo se maneja sobre las calles. Las que salen del área terminan en barreras rojo/blanco.
 - Minimapa abajo a la izquierda y nombre de la calle arriba.
 - **Mapa expandido** (M, botón "Mapa" o cruceta ↑ del control): pausa el juego y muestra toda la
   ciudad con tu posición. Zoom con rueda / + − / gatillos; mover arrastrando, con flechas o el stick;
   C / A centra en ti; M / Esc / B cierra. Con zoom aparecen los nombres de las calles.
-- **Tráfico ligero** (24 carros) y **semáforos** en los cruces con avenida. Los carros manejan por
+- **Tráfico ligero** (24 carros) y **semáforos**. Los carros manejan por
   la derecha, respetan el sentido de cada calle, guardan distancia (también contigo), se detienen
   en rojo y en cruces sin semáforo esperan si está ocupado.
 - En modo libre no hay reglas para ti: no hay avisos por pasarte un alto o ir en sentido contrario.
