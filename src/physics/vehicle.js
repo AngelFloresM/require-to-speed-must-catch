@@ -5,6 +5,7 @@ import { driveForce, engineRpm, computeTopSpeed, torqueAt, ratio } from './engin
 
 const G = 9.81;
 const clamp = (v, a, b) => (v < a ? a : v > b ? b : v);
+const MANUAL_HOLD = 3; // s que la automática respeta un cambio manual
 
 // Fuerza lateral normalizada: sube lineal hasta el pico y luego cae poco
 // (derrape controlable, no "hielo").
@@ -35,6 +36,7 @@ export class Vehicle {
     this.rpm = spec.idleRpm;
     this.shiftTimer = 0;    // tiempo restante del cambio (sin empuje)
     this.automatic = true;
+    this.manualHold = 0;    // caja automática: tiempo que respeta un cambio manual
     this.wheelspin = false;
     this.drifting = false;
     this.aLong = 0;         // aceleración del paso anterior (transferencia de peso)
@@ -63,22 +65,30 @@ export class Vehicle {
     return true;
   }
 
-  // Cambio manual. No deja bajar si el motor pasaría del corte.
-  // Devuelve true si se hizo el cambio.
+  // Cambio manual (también en caja automática). No deja bajar si el motor
+  // pasaría del corte. Devuelve true si se hizo el cambio.
   manualShift(dir) {
     const p = this.spec;
     const next = this.gear + dir;
     if (next < 1 || next > p.gears.length) return false;
     if (dir < 0 && engineRpm(p, next, this.forwardSpeed) > p.redline * 1.03) return false;
-    return this.shift(dir);
+    const done = this.shift(dir);
+    // La automática respeta la marcha elegida un rato antes de volver a decidir.
+    if (done && this.automatic) this.manualHold = MANUAL_HOLD;
+    return done;
   }
 
   autoShift(vLong) {
     const p = this.spec;
     if (this.shiftTimer > 0 || vLong < 0) return;
     const rpm = engineRpm(p, this.gear, vLong);
-    if (rpm > p.redline * p.upshiftAt && this.gear < p.gears.length) this.shift(1);
-    else if (this.gear > 1 && engineRpm(p, this.gear - 1, vLong) < p.redline * p.downshiftAt) this.shift(-1);
+    // Tras un cambio manual solo cambia en los extremos: en el corte o casi sin RPM.
+    const hold = this.manualHold > 0;
+    const up = hold ? p.redline * 0.995 : p.redline * p.upshiftAt;
+    const down = hold ? p.idleRpm * 1.3 : p.redline * p.downshiftAt;
+    const prevRpm = hold ? rpm : engineRpm(p, this.gear - 1, vLong);
+    if (rpm > up && this.gear < p.gears.length) this.shift(1);
+    else if (this.gear > 1 && prevRpm < down) this.shift(-1);
   }
 
   update(dt) {
@@ -117,6 +127,7 @@ export class Vehicle {
     else this.nitro = Math.min(p.nitroCapacity, this.nitro + p.nitroRecharge * dt);
 
     // Motor y caja.
+    if (this.manualHold > 0) this.manualHold -= dt;
     if (this.automatic) this.autoShift(vLong);
     if (this.shiftTimer > 0) this.shiftTimer -= dt;
     this.rpm = engineRpm(p, this.gear, vLong);

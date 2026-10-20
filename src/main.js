@@ -334,7 +334,7 @@ function frame(now) {
   if (mode === 'racing') {
     const p = race.player;
     if (input.actions.has('camera')) camMode = (camMode + 1) % 2;
-    if (!p.car.automatic && race.state === 'racing') {
+    if (race.state === 'racing') {
       if (input.actions.has('shiftUp')) p.car.manualShift(1);
       if (input.actions.has('shiftDown')) p.car.manualShift(-1);
     }
