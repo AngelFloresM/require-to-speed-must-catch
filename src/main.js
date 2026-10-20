@@ -73,7 +73,7 @@ function loadTrack(i) {
   const b = trackBounds(track);
   trackView = { x: (b.minX + b.maxX) / 2, y: (b.minY + b.maxY) / 2, rx: (b.maxX - b.minX) * 0.75, ry: (b.maxY - b.minY) * 0.75 };
   document.getElementById('track-desc').textContent = def.desc;
-  drawTrackThumb(document.getElementById('track-thumb'), track);
+  drawTrackThumb(document.getElementById('track-thumb'), track, TRACKS[trackIndex].name);
   if (preview) showPreview();
 }
 
@@ -231,9 +231,10 @@ function setGarageMode(m) {
   document.getElementById('garage').classList.toggle('free', m === 'free');
   document.getElementById('start').textContent = m === 'free' ? 'Manejar' : 'Correr';
 }
+addEventListener('resize', () => drawTrackThumb(document.getElementById('track-thumb'), track, TRACKS[trackIndex].name));
 document.querySelector('#menu [data-go="garage"]').addEventListener('click', () => {
   setGarageMode('race');
-  drawTrackThumb(document.getElementById('track-thumb'), track);
+  drawTrackThumb(document.getElementById('track-thumb'), track, TRACKS[trackIndex].name);
 });
 document.getElementById('free-btn').addEventListener('click', () => {
   setGarageMode('free');

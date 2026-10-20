@@ -2,7 +2,7 @@
 // ajustado al canvas, la meta y una flecha con el sentido de carrera.
 import { trackBounds } from '../track.js';
 
-export function drawTrackThumb(canvas, track) {
+export function drawTrackThumb(canvas, track, name = '') {
   // Oculto (otro menú en pantalla): se dibuja al mostrarse.
   const w = canvas.clientWidth;
   const h = canvas.clientHeight;
@@ -15,7 +15,8 @@ export function drawTrackThumb(canvas, track) {
   g.clearRect(0, 0, w, h);
 
   const b = trackBounds(track);
-  const pad = 12;
+  const pad = Math.max(12, Math.min(w, h) * 0.1);
+  const u = Math.max(1, Math.min(w, h) / 120); // escala de trazos y textos
   const k = Math.min((w - pad * 2) / (b.maxX - b.minX), (h - pad * 2) / (b.maxY - b.minY));
   const ox = (w - (b.maxX - b.minX) * k) / 2;
   const oy = (h - (b.maxY - b.minY) * k) / 2;
@@ -30,7 +31,10 @@ export function drawTrackThumb(canvas, track) {
   }
   g.closePath();
   g.strokeStyle = '#e8e8e8';
-  g.lineWidth = 3;
+  g.lineWidth = 3 * u;
+  g.stroke();
+  g.strokeStyle = '#4a5058';
+  g.lineWidth = 1.2 * u;
   g.stroke();
 
   // Meta: raya cruzada a la pista.
@@ -39,10 +43,10 @@ export function drawTrackThumb(canvas, track) {
   const nx = Math.sin(p0.heading);
   const ny = Math.cos(p0.heading);
   g.strokeStyle = '#4caf50';
-  g.lineWidth = 4;
+  g.lineWidth = 3 * u;
   g.beginPath();
-  g.moveTo(mx - nx * 7, my - ny * 7);
-  g.lineTo(mx + nx * 7, my + ny * 7);
+  g.moveTo(mx - nx * 6 * u, my - ny * 6 * u);
+  g.lineTo(mx + nx * 6 * u, my + ny * 6 * u);
   g.stroke();
 
   // Flecha del sentido de carrera, un poco después de la meta.
@@ -52,15 +56,20 @@ export function drawTrackThumb(canvas, track) {
   const fy = -Math.sin(p1.heading);
   g.fillStyle = '#ffd34d';
   g.beginPath();
-  g.moveTo(ax + fx * 8, ay + fy * 8);
-  g.lineTo(ax - fx * 4 - fy * 5, ay - fy * 4 + fx * 5);
-  g.lineTo(ax - fx * 4 + fy * 5, ay - fy * 4 - fx * 5);
+  const a = 4 * u;
+  g.moveTo(ax + fx * a * 2, ay + fy * a * 2);
+  g.lineTo(ax - fx * a - fy * a * 1.2, ay - fy * a + fx * a * 1.2);
+  g.lineTo(ax - fx * a + fy * a * 1.2, ay - fy * a - fx * a * 1.2);
   g.closePath();
   g.fill();
 
-  // Largo de la vuelta.
-  g.fillStyle = 'rgba(255,255,255,0.75)';
-  g.font = '12px system-ui, sans-serif';
+  // Nombre y largo de la vuelta.
+  const fs = Math.round(Math.max(12, Math.min(18, h / 14)));
+  g.fillStyle = 'rgba(255,255,255,0.85)';
+  g.font = `bold ${fs}px system-ui, sans-serif`;
+  g.textAlign = 'left';
+  if (name) g.fillText(name.toUpperCase(), fs * 0.8, fs * 1.6);
+  g.font = `${fs}px system-ui, sans-serif`;
   g.textAlign = 'right';
-  g.fillText(`${(track.length / 1000).toFixed(1)} km`, w - 6, h - 6);
+  g.fillText(`${(track.length / 1000).toFixed(1)} km por vuelta`, w - fs * 0.8, h - fs * 0.8);
 }
