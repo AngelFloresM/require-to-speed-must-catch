@@ -76,6 +76,12 @@ button.arrow { min-width: 44px; padding: 6px 10px; }
 .options select { min-width: 0; }
 .track-pick select { min-width: 0; flex: 1; margin-left: 8px; }
 .track-pick label { display: flex; align-items: center; }
+/* Miniatura de la pista: abajo a la derecha, bajo el carro. En pantallas angostas va en la lista. */
+#garage #track-thumb { position: absolute; right: 4vw; bottom: 4vh; width: min(46vw, 900px); height: 34vh;
+  background: rgba(10, 14, 20, 0.55); border-radius: 6px; }
+@media (max-width: 800px) {
+  #garage #track-thumb { position: static; width: min(440px, 92vw); height: 180px; }
+}
 #track-desc { margin: 6px 0 0; font-size: 13px; opacity: 0.8; min-height: 2.4em; }
 .tach { position: relative; width: 220px; height: 10px; background: #222; margin: 0 0 6px auto; }
 #h-rpm { height: 100%; width: 0; background: #e8e8e8; }

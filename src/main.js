@@ -6,6 +6,7 @@ import { Race, PHYSICS_DT } from './race.js';
 import { CARS } from './data/cars.js';
 import { pickRivals } from './rivals.js';
 import { buildTrack } from './render/trackMesh.js';
+import { drawTrackThumb } from './ui/trackThumb.js';
 import { TrackMinimap } from './ui/trackMinimap.js';
 import { CarMesh } from './render/carMesh.js';
 import { Vehicle } from './physics/vehicle.js';
@@ -72,6 +73,7 @@ function loadTrack(i) {
   const b = trackBounds(track);
   trackView = { x: (b.minX + b.maxX) / 2, y: (b.minY + b.maxY) / 2, rx: (b.maxX - b.minX) * 0.75, ry: (b.maxY - b.minY) * 0.75 };
   document.getElementById('track-desc').textContent = def.desc;
+  drawTrackThumb(document.getElementById('track-thumb'), track, TRACKS[trackIndex].name);
   if (preview) showPreview();
 }
 
@@ -229,7 +231,11 @@ function setGarageMode(m) {
   document.getElementById('garage').classList.toggle('free', m === 'free');
   document.getElementById('start').textContent = m === 'free' ? 'Manejar' : 'Correr';
 }
-document.querySelector('#menu [data-go="garage"]').addEventListener('click', () => setGarageMode('race'));
+addEventListener('resize', () => drawTrackThumb(document.getElementById('track-thumb'), track, TRACKS[trackIndex].name));
+document.querySelector('#menu [data-go="garage"]').addEventListener('click', () => {
+  setGarageMode('race');
+  drawTrackThumb(document.getElementById('track-thumb'), track, TRACKS[trackIndex].name);
+});
 document.getElementById('free-btn').addEventListener('click', () => {
   setGarageMode('free');
   showScreen('garage');
