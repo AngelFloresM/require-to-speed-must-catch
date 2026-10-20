@@ -60,6 +60,8 @@ button.arrow { min-width: 44px; padding: 6px 10px; }
 #street { position: absolute; top: 16px; left: 50%; transform: translateX(-50%); padding: 6px 14px;
   background: rgba(10, 14, 20, 0.6); font-weight: bold; text-shadow: 0 1px 3px #000; white-space: nowrap; }
 #street:empty { display: none; }
+.osm-credit { position: absolute; left: 16px; bottom: 0; margin: 0 0 1px; font-size: 10px; opacity: 0.7; }
+#big-map .osm-credit { top: 16px; bottom: auto; font-size: 12px; }
 #hud.free .top-left, #hud.free .top-right { display: none; }
 #garage.free .race-only, #garage.free .track-pick { display: none; }
 

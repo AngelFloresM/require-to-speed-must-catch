@@ -1,7 +1,7 @@
 // Ciudad en 3D, sin texturas y con pocas mallas (edificios y árboles instanciados).
 import * as THREE from 'three';
 import { drivableGap, pointInPolygon } from '../city/city.js';
-import { RIVER, LANDMARKS } from '../data/tepic.js';
+import { MAP, RIVERS, WATER, LANDMARKS } from '../data/tepic.js';
 
 const to3 = (x, y, h = 0) => new THREE.Vector3(x, h, -y);
 
@@ -132,10 +132,11 @@ export function buildCityMesh(city) {
   // Parques y plaza.
   for (const p of city.parks) group.add(polygonMesh(p.poly, p.plaza ? 0xd8cdb5 : 0x5f9a48, 0.045));
 
-  // Río Mololoa.
+  // Río Mololoa y cuerpos de agua.
   const river = new FlatBuilder();
-  river.ribbon(RIVER.path, -RIVER.width / 2, RIVER.width / 2, 0.035);
+  for (const r of RIVERS) river.ribbon(r.path, -r.width / 2, r.width / 2, 0.035);
   group.add(river.mesh(new THREE.MeshLambertMaterial({ color: 0x3f8fb5 })));
+  for (const w of WATER) group.add(polygonMesh(w, 0x3f8fb5, 0.04, 10));
 
   // Calles: asfalto + cruces.
   const asphalt = new FlatBuilder();
@@ -181,8 +182,11 @@ export function buildCityMesh(city) {
   // Barreras donde las calles salen del área.
   group.add(buildBarriers(city));
 
-  // Edificios (casas de 1 a 3 pisos, colores de fachada del centro).
-  group.add(buildBuildings(city, rand));
+  // Edificios: los de OpenStreetMap con su planta real; el resto del espacio
+  // se llena con casas de 1 a 3 pisos (colores de fachada del centro).
+  const real = buildRealBuildings(city, rand);
+  group.add(real.mesh);
+  group.add(buildBuildings(city, rand, real.occupied));
 
   // Árboles en parques.
   group.add(buildParkTrees(city, rand));
@@ -271,10 +275,73 @@ function buildBarriers(city) {
   return group;
 }
 
-function buildBuildings(city, rand) {
-  const PALETTE = [0xe8d3a9, 0xd9a07a, 0xc9d6c0, 0xe2c4c4, 0xb8c7d9, 0xf0e2c0, 0xd8b98c, 0xcfa6a0, 0xe6e0d4, 0xa9c2a4];
+const PALETTE = [0xe8d3a9, 0xd9a07a, 0xc9d6c0, 0xe2c4c4, 0xb8c7d9, 0xf0e2c0, 0xd8b98c, 0xcfa6a0, 0xe6e0d4, 0xa9c2a4];
+const CELL = 3; // celdas de ocupación para no encimar edificios
+const cellKey = (x, y) => `${Math.floor(x / CELL)},${Math.floor(y / CELL)}`;
+
+// Edificios reales: planta de OSM extruida (paredes + techo) en una sola malla.
+// Se omiten los que pisan la calle (el ancho de las calles es estimado).
+function buildRealBuildings(city, rand) {
+  const pos = [];
+  const col = [];
   const occupied = new Set();
-  const cell = 3;
+  const color = new THREE.Color();
+  const near = (x, y) => Math.hypot(x - LANDMARKS.cathedral[0], y - LANDMARKS.cathedral[1]) < 32;
+  for (const b of MAP.buildings) {
+    const levels = b[0];
+    const poly = [];
+    for (let i = 1; i < b.length; i += 2) poly.push([b[i], b[i + 1]]);
+    if (poly.some(([x, y]) => !pointInPolygon(x, y, city.boundary) || near(x, y))) continue;
+    const onRoad = poly.some(([x, y]) => {
+      const g = drivableGap(city, x, y);
+      return g && g.gap < 0.5;
+    });
+    if (onRoad) continue;
+    const bb = bounds(poly);
+    for (let x = bb.minX; x <= bb.maxX; x += CELL / 2) {
+      for (let y = bb.minY; y <= bb.maxY; y += CELL / 2) if (pointInPolygon(x, y, poly)) occupied.add(cellKey(x, y));
+    }
+    for (const [x, y] of poly) occupied.add(cellKey(x, y));
+    const h = (levels || 1 + Math.floor(rand() * 3)) * 3.3;
+    color.setHex(PALETTE[Math.floor(rand() * PALETTE.length)]);
+    const push = (x, y, z) => {
+      pos.push(x, z, -y);
+      col.push(color.r, color.g, color.b);
+    };
+    // Paredes, con la cara hacia afuera sin importar el orden de los vértices.
+    const ccw = poly.reduce((a, p, i) => {
+      const q = poly[(i + 1) % poly.length];
+      return a + p[0] * q[1] - q[0] * p[1];
+    }, 0) > 0;
+    for (let i = 0; i < poly.length; i++) {
+      let p = poly[i];
+      let q = poly[(i + 1) % poly.length];
+      if (!ccw) [p, q] = [q, p];
+      push(p[0], p[1], 0); push(q[0], q[1], 0); push(q[0], q[1], h);
+      push(p[0], p[1], 0); push(q[0], q[1], h); push(p[0], p[1], h);
+    }
+    // Techo un poco más oscuro.
+    color.multiplyScalar(0.85);
+    const tris = THREE.ShapeUtils.triangulateShape(poly.map(([x, y]) => new THREE.Vector2(x, y)), []);
+    for (const [i, j, k] of tris) {
+      const pts = [poly[i], poly[j], poly[k]];
+      const cross = (pts[1][0] - pts[0][0]) * (pts[2][1] - pts[0][1]) - (pts[1][1] - pts[0][1]) * (pts[2][0] - pts[0][0]);
+      for (const [x, y] of cross > 0 ? pts : [pts[0], pts[2], pts[1]]) push(x, y, h);
+    }
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+  g.computeVertexNormals();
+  const mesh = new THREE.Mesh(g, new THREE.MeshLambertMaterial({ vertexColors: true }));
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
+  mesh.userData.count = pos.length;
+  return { mesh, occupied };
+}
+
+function buildBuildings(city, rand, occupied = new Set()) {
+  const cell = CELL;
   const items = [];
   const free = (x, y) => {
     if (!pointInPolygon(x, y, city.boundary)) return false;

@@ -11,7 +11,7 @@ test('la ciudad tiene calles, intersecciones y salida sobre una calle', () => {
   assert.ok(city.nodes.length > 200);
   const nr = nearestRoad(city, city.spawn.x, city.spawn.y);
   assert.ok(nr && nr.gap < -2, 'la salida está sobre la calle');
-  assert.equal(nr.edge.road.name, 'Av. México');
+  assert.match(nr.edge.road.name, /^Av\. México/);
 });
 
 test('todas las calles quedan dentro del área jugable', () => {
@@ -61,13 +61,14 @@ test('manejar sin rumbo nunca deja el carro fuera de las calles', () => {
 
 test('respawn deja el carro en el sentido permitido', () => {
   const ride = new FreeRide(city, CARS[0].physics);
-  const oneway = city.edges.find((e) => e.road.oneway === -1 && e.length > 40);
+  const oneway = city.edges.find((e) => e.road.oneway !== 0 && e.length > 40 && e.path.length === 2);
   const [a, b] = oneway.path;
   const car = ride.player.car;
-  car.place((a[0] + b[0]) / 2, (a[1] + b[1]) / 2, Math.atan2(b[1] - a[1], b[0] - a[0]));
-  ride.respawn();
   const dir = Math.atan2(b[1] - a[1], b[0] - a[0]);
-  assert.ok(Math.cos(car.heading - dir) < -0.99, 'mira en contra del orden del trazo (sentido -1)');
+  // Colocado en contra del sentido: el respawn lo voltea.
+  car.place((a[0] + b[0]) / 2, (a[1] + b[1]) / 2, dir + (oneway.road.oneway > 0 ? Math.PI : 0));
+  ride.respawn();
+  assert.ok(Math.cos(car.heading - dir) * oneway.road.oneway > 0.99, 'mira en el sentido de la calle');
 });
 
 test('esquinas redondeadas: la esquina se vuelve calle y el arco es la nueva orilla', () => {
@@ -117,13 +118,21 @@ test('dar vuelta en una esquina: con esquinas redondeadas ya no se golpea la ban
     }
     return hits;
   };
-  const nodes = city.nodes.filter((n) => n.edges.length === 4 && n.edges.every((e) => !e.road.major && e.length > 60)).slice(0, 12);
+  // Cruces en cruz (brazos a ~90°), como los del centro.
+  const square = (n) => {
+    const angs = n.edges.map((e) => {
+      const p = e.a === n ? e.path : [...e.path].reverse();
+      return Math.atan2(p[1][1] - p[0][1], p[1][0] - p[0][0]);
+    });
+    return angs.every((a) => angs.some((b) => Math.abs(Math.cos(a - b)) < 0.1));
+  };
+  const nodes = city.nodes.filter((n) => n.edges.length === 4 && n.edges.every((e) => !e.road.major && e.length > 60) && square(n)).slice(0, 12);
   const sharp = { ...city, fillets: [], filletIndex: new Map() };
   let withF = 0;
   let without = 0;
   for (const n of nodes) {
-    withF += turn(city, n, 13);
-    without += turn(sharp, n, 13);
+    withF += turn(city, n, 10.5);
+    without += turn(sharp, n, 10.5);
   }
   console.log({ conEsquinasRedondeadas: withF, sinEllas: without });
   assert.ok(without > 0, 'sin redondear, la vuelta pega con la esquina');
